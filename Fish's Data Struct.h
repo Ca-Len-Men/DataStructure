@@ -16,7 +16,7 @@ int index;
 #define forSList(arr) for(auto* element = arr.get_head(); element; element = element->next)
 
 const int MAXSIZE_BEGIN_TRAIN = 100;
-const int MAXSIZE_BEGIN_PROTRAIN = 50;
+
 template <class data> class train;
 class txt;
 template <class data> class node;
