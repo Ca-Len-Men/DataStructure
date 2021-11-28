@@ -5,16 +5,40 @@
 #include<iostream>
 #include<stdarg.h>
 
+
+//Biến toàn cục
+int index;
+
+//Lấy ra phần tử : * element
+#define forTrain(arr) index = 0; for(auto* element = &arr[0]; index < arr.size(); element = &arr[++index])
+
+//Lấy ra phần tử : element->info
+#define forSList(arr) for(auto* element = arr.get_head(); element; element = element->next)
+
 const int MAXSIZE_BEGIN_TRAIN = 100;
+const int MAXSIZE_BEGIN_PROTRAIN = 50;
 template <class data> class train;
 class txt;
 template <class data> class node;
 template <class data> class stack;
 template <class data> class SList;
+
+template <class data> class avlnode;
+template <class data> class avltree;
 //====================================================================================================
 template <class data> void Ascending(data* arr, int left, int right);
 template <class data> void Descending(data* arr, int left, int right);
 template <class data> inline void swap(data& a, data& b);
+
+template <class data> void LNR(data* root);
+template <class data> void LRN(data * root);
+template <class data> void NLR(data * root);
+template <class data> void NRL(data * root);
+template <class data> void RLN(data * root);
+template <class data> void RNL(data * root);
+
+template <class data> void BFS_L(data * root);
+template <class data> void BFS_R(data * root);
 //====================================================================================================
 template <class data>
 class train{
@@ -33,14 +57,14 @@ class train{
 	public:
 	//Khởi tạo
 		train();
-		train(const train& source);
+		train(train& source);
 		~train();
 
 	//Phương thức
 		void operator=(train& source);
 		void operator+=(train& tail);
 		bool operator==(train& source);
-		inline data operator[](int index);
+		inline data& operator[](int index);
 	//Hàm bổ trợ
 		void set_byte(int length = 0, ...);
 		void set(data member, int index);
@@ -56,7 +80,8 @@ class train{
 		void Symmetry();
 		template <class data_member> void sort_member(int idx_member, bool ascending = true);
 		template <class data_member> void show_member(int idx_member);
-
+		void memset(data value);
+		void memset(data value, int length);
 
 		bool isEmpty();
 		bool isSetByte();
@@ -68,11 +93,48 @@ class train{
 		int maxsize();
 		int find(data value);
 		template <class data_member> int find(data_member value, int idx_member);
-
 		data get(int index);
-
 	//Hàm bạn
 };
+
+//Gántoàn bộ mảng có độ dài length bằng giá trị value
+template <class data>
+void train<data>::memset(data value, int length)
+{
+	//Nếu length nhỏ hơn bằng 0, hàm kết thúc
+	if (length <= 0)
+	{
+		//Gán độ dài mảng bằng 0
+		size_member = 0;
+
+		//Nếu MAXSIZE > MAXSIZE_BEGIN_TRAIN : thay đổi lại độ dài thực của mảng
+		if(MAXSIZE > MAXSIZE_BEGIN_TRAIN)
+			change_MAXSIZE(MAXSIZE_BEGIN_TRAIN);
+		return;
+	}
+
+	int new_length = length / MAXSIZE_BEGIN_TRAIN;
+	if (new_length % MAXSIZE_BEGIN_TRAIN != 0)
+		new_length++;
+
+	//Thay đổi độ dài mảng thực cho phù hợp với length
+	if (new_length * MAXSIZE_BEGIN_TRAIN != MAXSIZE)
+		change_MAXSIZE(new_length * MAXSIZE_BEGIN_TRAIN);
+
+	//Gán toàn bộ mảng bằng giá trị value
+	for (int i = 0; i < length; i++)
+		array_member[i] = value;
+	//Gán độ dài mảng
+	size_member = length;
+}
+
+//Gán toàn bộ mảng hiện tại bằng giá trị value
+template <class data>
+void train<data>::memset(data value)
+{
+	for (int i = 0; i < size_array_byte; i++)
+		array_member[i] = value;
+}
 
 //Kiểm tra có phần tử có thành viên thứ idx_member bằng value
 template <class data>
@@ -97,7 +159,7 @@ bool train<data>::isFound(data value)
 
 //Toán tử phạm vi
 template <class data>
-inline data train<data>::operator[](int index)
+inline data& train<data>::operator[](int index)
 {
 	return array_member[index];
 }
@@ -146,7 +208,7 @@ void train<data>::operator+=(train& tail)
 	if (new_size > MAXSIZE)
 	{
 		int x_size = new_size / MAXSIZE_BEGIN_TRAIN;
-		if (new_size % 100 != 0)
+		if (new_size % MAXSIZE_BEGIN_TRAIN != 0)
 			x_size++;
 
 		change_MAXSIZE(x_size * MAXSIZE_BEGIN_TRAIN);
@@ -550,17 +612,40 @@ train<data>::~train()
 
 //Khởi tạo sao chép
 template <class data>
-train<data>::train(const train& source)
+train<data>::train(train& source)
 {
 	//Khởi tạo giá trị cho các biến thành viên
-	array_byte = NULL;
-	size_array_byte = 0;
 
-	MAXSIZE = MAXSIZE_BEGIN_TRAIN;
-	array_member = new data[MAXSIZE];
-	size_member = 0;
+	//Nếu mảng byte của nguồn rỗng
+	if (source.array_byte == NULL)
+	{
+		array_byte = NULL;
+		size_array_byte = 0;
+	}
+	else {	//Sao chép mảng byte từ nguồn
+		size_array_byte = source.size_array_byte;
+		array_byte = new int[size_array_byte];
 
-	*this = source;
+		for (int i = 0; i < size_array_byte; i++)
+			array_byte[i] = source.array_byte[i];
+	}
+
+	//Nếu mảng chính của nguồn rỗng
+	if (source.size_member == 0)
+	{
+		MAXSIZE = MAXSIZE_BEGIN_TRAIN;
+		array_member = new data[MAXSIZE];
+		size_member = 0;
+	}
+	else {	//Sao chép mảng chính từ nguồn
+		MAXSIZE = source.MAXSIZE;
+		size_member = source.size_member;
+		array_member = new data[MAXSIZE];
+		
+		for (int i = 0; i < size_member; i++)
+			array_member[i] = source.array_member[i];
+	}
+
 }
 
 //Khởi tạo
@@ -1749,6 +1834,7 @@ public:
 
 	data pop();
 	inline data get();
+
 };
 
 //Kiểm tra đã gán mảng byte chưa
@@ -1882,7 +1968,7 @@ inline data stack<data>::get()
 	if (top != NULL)
 		return top->info;
 
-	data value;
+	data value = 0;
 	return value;
 }
 
@@ -1913,23 +1999,18 @@ void stack<data>::free()
 	size = 0;
 }
 
-//Lấy ra phần tử ở đỉnh stack : nếu stack rỗng, giá trị trả về sẽ là rác
+//Lấy ra phần tử ở đỉnh stack : hãy chắc chắn rằng stack không rỗng
 template <class data>
 data stack<data>::pop()
 {
 	//Lưu giá trị ở đỉnh stack
 	data value;
-	
-	//Nếu stack không rỗng, lưu giá trị ở đỉnh stack vào biến value
-	if (top != NULL)
-	{
-		value = top->info;
+	value = top->info;
 
 		//Giải phóng đỉnh stack
-		node<data>* p = top;
-		top = top->next;
-		delete p;
-	}
+	node<data>* p = top;
+	top = top->next;
+	delete p;
 
 	//Trả về giá trị
 	return value;
@@ -2092,6 +2173,7 @@ public:
 
 	data pop();
 	inline data get();
+
 };
 
 //Kiểm tra đã gán mảng byte chưa
@@ -2238,17 +2320,12 @@ inline data queue<data>::get()
 	return value;
 }
 
-//Lấy ra đầu queue : nếu queue rỗng, giá trị trả về sẽ là rác
+//Lấy ra đầu queue ( hãy chắc chắn rằng queue không rỗng )
 template <class data>
 data queue<data>::pop()
 {
-	data value;
-
-	//Nếu queue rỗng, trả về giá trị value
-	if (head == NULL)
-		return value;
-
-	value = head->info;
+	//Lưu giá trị nút đầu queue
+	data value = head->info;
 
 	//Giải phóng nút đầu queue
 	node<data>* p = head;
@@ -2260,7 +2337,6 @@ data queue<data>::pop()
 
 	//Giảm độ dài queue
 	size--;
-
 	return value;
 }
 
@@ -2412,17 +2488,21 @@ class SList {
 private:
 	int* array_byte, size_array_byte;
 	node<data>* head, * tail;
-	int size;
+	int list_size;
 
 	//Hàm bổ trợ
 	template <class data_member> inline data_member* get_member(data* element, int idx_member);
-
+	void Ascending(node<data>* pointer);
+	void Descending(node<data>* pointer);
+	template <class data_member> void Ascending_member(node<data>* pointer, int idx_member);
+	template <class data_member> void Descending_member(node<data>* pointer, int idx_member);
 public:
 	SList();
 	SList(const SList& source);
 
 	//Phương thức
 	void operator=(SList& source);
+	data& operator[](int idx);
 
 	//Hàm bổ trợ
 	void set_byte(int length, ...);
@@ -2432,14 +2512,241 @@ public:
 	void push_back(data element);
 	void push_front(data element);
 	void pop_front(data& get);
+	void pop_back(data& get);
+	void sort(bool ascending = true);
+	template <class data_member> void sort_member(int idx_member, bool ascending = true);
+	void memset(data value);
+	void memset(data value, int length);
+	void rotate(int length);
 
 	inline bool isSetByte();
 	inline bool isEmpty();
 	bool isFound(data value);
 	template <class data_member> bool isFound_member(data_member value, int idx_member);
 
-	inline int length();
+	inline node<data>* get_head();
+	inline int size();
 };
+
+//Sử dụng phần tử thứ idx : hãy chắc chắn rằng phần tử thứ idx tồn tại
+template <class data>
+data& SList<data>::operator[](int idx)
+{
+	node<data>* i = head;
+	for (; idx > 0; idx--)
+		i = i->next;
+	return i->info;
+}
+
+//Xoay danh sách length phần tử ( đưa length phần tử đầu về cuối danh sách )
+template <class data>
+void SList<data>::rotate(int length)
+{
+	//Nếu danh sách rỗng hoặc chỉ có một phần tử, hàm kết thúc
+	if (head == NULL || list_size == 1)
+		return;
+
+	//Nối thành danh sách liên kết vòng
+	tail->next = head;
+
+	int new_length = length % list_size;
+	//Di chuyển tail new_length lần
+	for (; new_length > 0; new_length--)
+		tail = tail->next;
+
+	//Đưa head lên sau tail
+	head = tail->next;
+	//Ngắt liên kết tail
+	tail->next = NULL;
+}
+
+//Gán toàn bộ danh sách độ dài length bằng giá trị value
+template <class data>
+void SList<data>::memset(data value, int length)
+{
+	//Giải phóng danh sách cũ
+	free();
+
+	//Nếu length <= 0, hàm kết thúc
+	if (length <= 0)
+		return;
+
+	//Tạo danh sách có độ dài length
+	head = tail = new node<data>(value);
+	list_size++;
+
+	for (; list_size < length; list_size++, tail = tail->next)
+		tail->next = new node<data>(value);
+}
+
+//Gán toàn bộ danh sách hiện tại bằng giá trị value
+template <class data>
+void SList<data>::memset(data value)
+{
+	for (node<data>* i = head; i; i = i->next)
+		i->info = value;
+}
+
+//Lấy ra phần tử cuối của danh sách
+template <class data>
+void SList<data>::pop_back(data& get)
+{
+	//Nếu danh sách rỗng, hàm kết thúc
+	if (head == NULL)
+		return;
+
+	//Nếu danh sách chỉ có một phần tử, chuyển thành danh sách rỗng
+	if (list_size == 1)
+	{
+		get = head->info;
+		delete head;
+		head = tail = NULL;
+		list_size = 0;
+		return;
+	}
+
+	//Danh sách có nhiều phần tử, tìm đến nút trước tail
+	node<data>* p = head;
+	while (p->next != tail)
+		p = p->next;
+
+	//Gán giá trị nút cuối
+	get = tail->info;
+
+	//Ngắt liên kết với nút cuối
+	p->next = NULL;
+	delete tail;
+	tail = p;
+
+	//Giảm độ dài danh sách
+	list_size--;
+}
+
+//Sắp xếp danh sách theo thuộc tính
+template <class data>
+template <class data_member>
+void SList<data>::sort_member(int idx_member, bool ascending)
+{
+	if (ascending)
+		Ascending_member<data_member>(head, idx_member);
+	else
+		Descending_member<data_member>(head, idx_member);
+}
+
+//Sắp xếp danh sách giảm theo thuộc tính
+template <class data>
+template <class data_member>
+void SList<data>::Descending_member(node<data>* pointer, int idx_member)
+{
+	//Nếu danh sách rỗng hoặc chỉ có một nút, hàm kết thúc
+	if (head == NULL || list_size == 1)
+		return;
+
+	data temp;
+	node<data>* i, * end = NULL;
+	while (pointer->next != end)
+	{
+		i = pointer;
+		for (; i->next != end; i = i->next)
+			if (*get_member<data_member>(&i->info, idx_member) < *get_member<data_member>(&i->next->info, idx_member))
+			{
+				temp = i->info;
+				i->info = i->next->info;
+				i->next->info = temp;
+			}
+		end = i;
+	}
+}
+
+//Sắp xếp danh sách tăng theo thuộc tính
+template <class data>
+template <class data_member>
+void SList<data>::Ascending_member(node<data>* pointer, int idx_member)
+{
+	//Nếu danh sách rỗng hoặc chỉ có một nút, hàm kết thúc
+	if (head == NULL || list_size == 1)
+		return;
+
+	data temp;
+	node<data>* i, * end = NULL;
+	while (pointer->next != end)
+	{
+		i = pointer;
+		for (; i->next != end; i = i->next)
+			if (*get_member<data_member>(&i->info, idx_member) > *get_member<data_member>(&i->next->info, idx_member))
+			{
+				temp = i->info;
+				i->info = i->next->info;
+				i->next->info = temp;
+			}
+		end = i;
+	}
+}
+
+//Sắp xếp danh sách
+template <class data>
+void SList<data>::sort(bool ascending)
+{
+	if (ascending)
+		Ascending(head);
+	else
+		Descending(head);
+}
+
+//Sắp xếp danh sách giảm dần
+template <class data>
+void SList<data>::Descending(node<data>* pointer)
+{
+	//Nếu danh sách rỗng hoặc chỉ có một nút, hàm kết thúc
+	if (head == NULL || list_size == 1)
+		return;
+
+	data temp;
+	node<data>* i, * end = NULL;
+	while (pointer->next != end)
+	{
+		i = pointer;
+		for (; i->next != end; i = i->next)
+			if (i->info < i->next->info)
+			{
+				temp = i->info;
+				i->info = i->next->info;
+				i->next->info = temp;
+			}
+		end = i;
+	}
+}
+
+//Sắp xếp danh sách tăng dần
+template <class data>
+void SList<data>::Ascending(node<data>* pointer)
+{
+	//Nếu danh sách rỗng hoặc chỉ có một nút, hàm kết thúc
+	if (head == NULL || list_size == 1)
+		return;
+
+	data temp;
+	node<data>* i, * end = NULL;
+	while(pointer->next != end)
+	{
+		i = pointer;
+		for(; i->next != end; i = i->next)
+			if (i->info > i->next->info)
+			{
+				temp = i->info;
+				i->info = i->next->info;
+				i->next->info = temp;
+			}
+		end = i;
+	}
+}
+
+//Trả về địa chỉ nút đầu của SList
+template <class data>
+inline node<data>* SList<data>::get_head()
+{
+	return head;
+}
 
 //Kiểm tra trong SList có phần tử có thuộc tính thứ idx_member bằng value
 template <class data>
@@ -2482,7 +2789,7 @@ void SList<data>::pop_front(data& get)
 		tail = NULL;
 
 	//Giảm độ dài của SList
-	size--;
+	list_size--;
 }
 
 //Thêm phần tử vào đầu SList
@@ -2493,7 +2800,7 @@ void SList<data>::push_front(data element)
 	if (head == NULL)
 	{
 		head = tail = new node<data>(element);
-		size++;
+		list_size++;
 		return;
 	}
 
@@ -2501,7 +2808,7 @@ void SList<data>::push_front(data element)
 	node<data>* p = new node<data>(element);
 	p->next = head;
 	head = p;
-	size++;
+	list_size++;
 }
 
 //Thêm phần tử vào cuối SList
@@ -2512,14 +2819,14 @@ void SList<data>::push_back(data element)
 	if (head == NULL)
 	{
 		head = tail = new node<data>(element);
-		size++;
+		list_size++;
 		return;
 	}
 
 	//Cấp phát một nút, đưa vào cuối SList
 	tail->next = new node<data>(element);
 	tail = tail->next;
-	size++;
+	list_size++;
 }
 
 //Xuất SList
@@ -2559,9 +2866,9 @@ void SList<data>::swap(SList& source)
 	source.tail = p;
 
 	//Hoán vị hai độ dài SList
-	int temp = size;
-	size = source.size;
-	source.size = temp;
+	int temp = list_size;
+	list_size = source.list_size;
+	source.list_size = temp;
 }
 
 //Gán bằng hai SList
@@ -2591,7 +2898,7 @@ void SList<data>::operator=(SList& source)
 		}
 
 	//Gán độ dài mảng chính
-	size = source.size;
+	list_size = source.list_size;
 }
 
 //Chuyển thành SList rỗng
@@ -2609,7 +2916,7 @@ void SList<data>::free()
 	}
 
 	//Gán độ dài SList bằng 0
-	size = 0;
+	list_size = 0;
 }
 
 //Gán mảng byte cho SList
@@ -2638,9 +2945,9 @@ void SList<data>::set_byte(int length, ...)
 
 //Trả về độ dài SList
 template <class data>
-inline int SList<data>::length()
+inline int SList<data>::size()
 {
-	return size;
+	return list_size;
 }
 
 //Kiểm tra đã gán mảng byte chưa
@@ -2680,7 +2987,7 @@ SList<data>::SList(const SList& source)
 	if (source.head == NULL)
 	{
 		head = tail = NULL;
-		size = 0;
+		list_size = 0;
 		return;
 	}
 
@@ -2697,7 +3004,7 @@ SList<data>::SList(const SList& source)
 		}
 
 	//Gán độ dài SList
-	size = source.size;
+	list_size = source.list_size;
 }
 
 //Khởi tạo
@@ -2710,7 +3017,487 @@ SList<data>::SList()
 
 	//Gán list rỗng
 	head = tail = NULL;
-	size = 0;
+	list_size = 0;
+}
+//====================================================================================================
+template <class data>
+class avlnode {
+public:
+	data info;
+	short height, size;
+	avlnode* left, * right;
+
+	//Hàm khởi tạo
+	avlnode(data value);
+
+	//Hàm tĩnh
+	static void count_height(avlnode<data>* root);
+	static inline int get_height(avlnode<data>* root);
+	static int count_balance(avlnode<data>* root);
+};
+
+//Tính độ lệch của hai cây con trái và phải
+template <class data>
+int avlnode<data>::count_balance(avlnode<data>* root)
+{
+	return get_height(root->left) - get_height(root->right);
+}
+
+//Tính chiều cao của nút : nút rỗng trả về 0
+template <class data>
+inline int avlnode<data>::get_height(avlnode<data>* root)
+{
+	if (root == NULL)
+		return 0;
+	return root->height;
+}
+
+//Tính chiều cao của nút dựa vào cây con trái và phải ( hãy chắc chắn rằng nút root không rỗng )
+template <class data>
+void avlnode<data>::count_height(avlnode<data>* root)
+{
+	int height_left = root->left == NULL ? 0 : root->left->height;
+	int height_right = root->right == NULL ? 0 : root->right->height;
+	root->height = 1 + (height_left >= height_right ? height_left : height_right);
+}
+
+template <class data>
+avlnode<data>::avlnode(data value)
+{
+	info = value;
+	height = size = 1;
+	left = right = NULL;
+}
+//====================================================================================================
+template <class data>
+class avltree {
+private:
+	int* array_byte, size_array_byte;
+	avlnode<data>* root;
+	int size_member;
+
+	void balance_root(avlnode<data>** root);
+	void push_recursive(avlnode<data>** root, data element);
+	void pop_recursive(avlnode<data>** root, data element);
+	data poor_left_child(avlnode<data>** root);
+	data poor_right_child(avlnode<data>** root);
+
+	void rotate_left(avlnode<data>** root);
+	void rotate_right(avlnode<data>** root);
+public:
+
+	//Hàm khởi tạo
+	avltree();
+
+	//Toán tử
+
+	//Hàm bổ trợ
+	void push(data element);
+	void pop(data element);
+	void show(void (*pointer_function)(avlnode<data>*) = LNR);
+
+	bool isEmpty();
+	bool isFound(data value);
+
+	avlnode<data>* get_root();
+};
+
+//Kiểm tra có giá trị value trong cây
+template <class data>
+bool avltree<data>::isFound(data value)
+{
+	avlnode<data>* p = root;
+
+	while (p)
+	{
+		//Tìm thấy giá trị value
+		if (value == p->info)
+			return true;
+
+		//Giá trị value ở nhánh trái
+		if (value < p->info)
+			p = p->left;
+		else//Giá trị value ở nhánh phải
+			p = p->right;
+	}
+
+	//Không tìm thấy
+	return false;
+}
+
+//Kiểm tra cây rỗng
+template <class data>
+bool avltree<data>::isEmpty()
+{
+	return root == NULL;
+}
+
+//Lấy ra phần tử element
+template <class data>
+void avltree<data>::pop(data element)
+{
+	pop_recursive(&root, element);
+}
+
+//Hàm đệ quy tìm nút thế mạng ở cây con trái ( hãy chắc chằn rằng root không rỗng )
+template <class data>
+data avltree<data>::poor_left_child(avlnode<data>** root)
+{
+	data temp;
+	//Nếu root là nút thế mạng
+	if ((*root)->right == NULL)
+	{
+		avlnode<data>* p = *root;
+		temp = p->info;			//Giữ giá trị
+		*root = p->left;		//Đưa cây con trái lên
+		delete p;				//Giải phóng
+		return temp;			//Trả về giá trị
+	}
+
+	//Đệ quy
+	temp = poor_left_child(&(*root)->right);
+
+	//Cập nhật lại chiều cao nút
+	avlnode<data>::count_height(*root);
+	//Thực hiện cân bằng lại nút nếu có
+	balance_root(root);
+
+	return temp;	//Trả về giá trị
+}
+
+//Hàm đệ quy tìm nút thế mạng ở cây con phải ( hãy chắc chằn rằng root không rỗng )
+template <class data>
+data avltree<data>::poor_right_child(avlnode<data>** root)
+{
+	data temp;
+	//Nếu root là nút thế mạng
+	if ((*root)->left == NULL)
+	{
+		avlnode<data>* p = *root;
+		temp = p->info;			//Giữ giá trị
+		*root = p->right;		//Đưa cây con phải lên
+		delete p;				//Giải phóng
+		return temp;			//Trả về giá trị
+	}
+
+	//Đệ quy
+	temp = poor_right_child(&(*root)->left);
+
+	//Cập nhật lại chiều cao nút
+	avlnode<data>::count_height(*root);
+	//Thực hiện cân bằng lại nút nếu có
+	balance_root(root);
+
+	return temp;	//Trả về giá trị
+}
+
+//Hàm đệ quy lấy ra nút element
+template <class data>
+void avltree<data>::pop_recursive(avlnode<data>** root, data element)
+{
+	//Nếu root rỗng, hàm kết thúc
+	if (*root == NULL)
+		return;
+
+	//root là nút cần xóa
+	if (element == (*root)->info)
+	{
+		//Nếu root chỉ có một hoặc không có con
+		if ((*root)->left == NULL || (*root)->right == NULL)
+		{
+			avlnode<data>* k = *root;
+
+			if ((*root)->left != NULL)	//Nếu root chỉ có con trái
+			{
+				*root = k->left;	//Đưa con trái lên
+			}
+			else if ((*root)->right != NULL) //Nếu root chỉ có con phải
+			{
+				*root = k->right;	//Đưa con phải lên
+			}
+			else {//root không có con
+				*root = NULL;
+			}
+
+			delete k;
+		} else {	//root có hai con
+			//Xét độ lệch của root
+			int balance = avlnode<data>::count_balance(*root);
+
+			if (balance >= 0)	//root lệch trái hoặc cân bằng
+				(*root)->info = poor_left_child(&(*root)->left);	//Tìm nút thế mạng ở cây con trái
+			else
+				(*root)->info = poor_right_child(&(*root)->right);	//Tìm nút thế mạng ở cây con phải
+		}
+
+		//Tính lại chiều cao root nếu có
+		if(*root != NULL)
+			avlnode<data>::count_height(*root);
+		
+		return;	//Hàm kết thúc
+	} else if (element < (*root)->info)	//Đệ quy cây con trái
+		pop_recursive(&(*root)->left, element);
+	else		//Đệ quy cây con trái
+		pop_recursive(&(*root)->right, element);
+
+	//Cập nhật lại chiều cao nút
+	avlnode<data>::count_height(*root);
+	//Thực hiện cân bằng lại nút nếu có
+	balance_root(root);
+}
+
+//Duyệt cây theo chỉ định
+template <class data>
+void avltree<data>::show(void (*pointer_function)(avlnode<data>*))
+{
+	pointer_function(root);
+}
+
+//Trả về địa chỉ nút gốc
+template <class data>
+avlnode<data>* avltree<data>::get_root()
+{
+	return root;
+}
+
+//Xoay nút sang phải ( đưa nút con trái lên )
+template <class data>
+void avltree<data>::rotate_right(avlnode<data>** root)
+{
+	//Nếu root rỗng, hàm kết thúc
+	if (*root == NULL)
+		return;
+
+	//Nếu cây con trái rỗng, hàm kết thúc
+	if ((*root)->left == NULL)
+		return;
+
+	//Thực hiện xoay phải
+	avlnode<data>* temp = *root;	//Giữ vị trí root
+	*root = temp->left;				//Trỏ root vào cây con phải
+	temp->left = (*root)->right;
+	(*root)->right = temp;
+
+	//Thay đổi chiều cao
+	avlnode<data>::count_height(temp);
+	avlnode<data>::count_height(*root);
+}
+
+//Xoay nút sang trái ( đưa nút con phải lên )
+template <class data>
+void avltree<data>::rotate_left(avlnode<data>** root)
+{
+	//Nếu root rỗng, hàm kết thúc
+	if (*root == NULL)
+		return;
+
+	//Nếu cây con phải rỗng, hàm kết thúc
+	if ((*root)->right == NULL)
+		return;
+
+	//Thực hiện xoay trái
+	avlnode<data>* temp = *root;	//Giữ vị trí root
+	*root = temp->right;			//Trỏ root vào cây con phải
+	temp->right = (*root)->left;
+	(*root)->left = temp;
+
+	//Thay đổi chiều cao
+	avlnode<data>::count_height(temp);
+	avlnode<data>::count_height(*root);
+}
+
+//Thêm phần tử vào cây
+template <class data>
+void avltree<data>::push(data element)
+{
+	push_recursive(&root, element);
+}
+
+//Hàm đệ quy thêm một nút mang giá trị element
+template <class data>
+void avltree<data>::push_recursive(avlnode<data>** root, data element)
+{
+	//Cấp phát một nút mang giá trị element, hàm kết thúc
+	if (*root == NULL)
+	{
+		*root = new avlnode<data>(element);
+		return;
+	}
+
+	//Đệ quy
+	if (element == (*root)->info)	//Nếu element bằng giá trị của root
+	{
+		(*root)->size++;	//Tăng thêm một phần tử
+		return;
+	}
+	else if (element < (*root)->info)	//Thêm element vào cây con trái
+		push_recursive(&(*root)->left, element);
+	else
+		push_recursive(&(*root)->right, element);
+
+	//Tính lại chiều cao của root
+	avlnode<data>::count_height(*root);
+	//Cân bằng lại root nếu lệch
+	balance_root(root);
+}
+
+//Cân bằng tại root
+template <class data>
+void avltree<data>::balance_root(avlnode<data>** root)
+{
+	//Tính độ lệch của root
+	int balance = avlnode<data>::count_balance(*root);
+
+	if (balance > 1)	//Cây lệch trái
+	{
+		//Xét cây con trái
+		int balance_left_child = avlnode<data>::count_balance((*root)->left);
+
+		if (balance_left_child >= 0)	//Cây con trái lệch trái hoặc cân bằng
+		{
+			//Xoay phải root
+			rotate_right(root);
+		}
+		else {							//Cây con trái lệch trái lệch phải
+			//Xoay trái root->left
+			rotate_left(&(*root)->left);
+			//Xoay phải root
+			rotate_right(root);
+		}
+	} else if (balance < -1)	//Cây lệch phải
+		{
+			//Xét cây con phải
+			int balance_right_child = avlnode<data>::count_balance((*root)->right);
+
+			if (balance_right_child <= 0)	//Cây con phải lệch phải hoặc cân bằng
+			{
+				//Xoay trái p
+				rotate_left(root);
+			}
+			else {							//Cây con phải lệch trái
+				//Xoay phải root->right
+				rotate_right(&(*root)->right);
+				//Xoay trái root
+				rotate_left(root);
+			}
+		}
+}
+
+//Khởi tạo cây rỗng
+template <class data>
+avltree<data>::avltree()
+{
+	size_member = 0;
+	root = NULL;
+
+	array_byte = NULL;
+	size_array_byte = 0;
+}
+//====================================================================================================
+template <class data>
+void LNR(data* root)
+{
+	if (root == NULL)
+		return;
+
+	LNR(root->left);
+	std::cout << root->info << " : " << root->height << '\n';
+	LNR(root->right);
+}
+
+template <class data>
+void LRN(data* root)
+{
+	if (root == NULL)
+		return;
+
+	LRN(root->left);
+	LRN(root->right);
+	std::cout << root->info << " : " << root->height << '\n';
+}
+
+template <class data>
+void NLR(data* root)
+{
+	if (root == NULL)
+		return;
+
+	std::cout << root->info << " : " << root->height << '\n';
+	NLR(root->left);
+	NLR(root->right);
+}
+
+template <class data>
+void NRL(data* root)
+{
+	if (root == NULL)
+		return;
+
+	std::cout << root->info << " : " << root->height << '\n';
+	NRL(root->right);
+	NRL(root->left);
+}
+
+template <class data>
+void RLN(data* root)
+{
+	if (root == NULL)
+		return;
+
+	RLN(root->right);
+	RLN(root->left);
+	std::cout << root->info << " : " << root->height << '\n';
+}
+
+template <class data>
+void RNL(data* root)
+{
+	if (root == NULL)
+		return;
+
+	RNL(root->right);
+	std::cout << root->info << " : " << root->height << '\n';
+	RNL(root->left);
+}
+
+template <class data>
+void BFS_L(data* root)
+{
+	if (root == NULL)
+		return;
+
+	queue<data*> qu;
+	qu.push(root);
+
+	while (!qu.isEmpty())
+	{
+		root = qu.pop();
+		if (root->left)
+			qu.push(root->left);
+		if(root->right)
+			qu.push(root->right);
+		std::cout << root->info << " : " << root->height << '\n';
+	}
+}
+
+template <class data>
+void BFS_R(data* root)
+{
+	if (root == NULL)
+		return;
+
+	queue<data*> qu;
+	qu.push(root);
+
+	while (!qu.isEmpty())
+	{
+		root = qu.pop();
+		if (root->right)
+			qu.push(root->right);
+		if (root->left)
+			qu.push(root->left);
+		std::cout << root->info << " : " << root->height << '\n';
+	}
 }
 //====================================================================================================
 //====================================================================================================
