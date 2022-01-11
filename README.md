@@ -1,4 +1,4 @@
-# Fish' Data Structure.h gồm :
+# Fish's Data Structure.h gồm :
     + Mảng một chiều          : train<int> arr;
     + Chuỗi                   : txt text = "Hello World !";
     + Danh sách liên kết đơn  : SList<int> list;
@@ -7,7 +7,7 @@
     + Cây AVL                 : AVLTree<int> tree;
     + Cây đỏ đen              : RBTree<int> tree;             ( chưa xong )
   
-# Fishnum gồm :
+# Fishnum.h gồm :
     + Big Num                 : bigint var = 123456789;
 
 ## Chúc bạn học tập tốt <3
