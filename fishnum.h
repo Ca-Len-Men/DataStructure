@@ -30,10 +30,11 @@ public:
 	static void Multi(bigint& destination, bigint& var1, bigint& var2);
 	static void DivideAndConquer(bigint& destination, bigint& var1, bigint& var2, int n);
 	static void Exponential(bigint& destination, bigint& var1, long long n);
+
 public:
 	//Khởi tạo
 	bigint(long long value = 0);
-	bigint(bigint& var);
+	bigint(const bigint& var);
 	~bigint();
 
 	//Phương thức
@@ -44,28 +45,36 @@ public:
 	int byte();
 
 	//Toán tử
-	void operator>>(bigint& var);
 
-	void operator=(const bigint& var);
-	void operator=(long long value);
+	bigint& operator=(const bigint& var);
+	bigint& operator=(long long value);
 
-	bool operator==(bigint& var);
+	bool operator==(const bigint& var);
 	bool operator==(bool value);
 	bool operator!=(bool value);
-	bool operator<(bigint& var);
-	bool operator<=(bigint& var);
-	bool operator>(bigint& var);
-	bool operator>=(bigint& var);
+	bool operator<(const bigint& var);
+	bool operator<=(const bigint& var);
+	bool operator>(const bigint& var);
+	bool operator>=(const bigint& var);
 
-	void operator+=(bigint& var);
-	void operator-=(bigint& var);
-	void operator*=(bigint& var);
-	void operator^=(long long n);
+	bigint& operator+=(const bigint& var);
+	bigint& operator-=(const bigint& var);
+	bigint& operator*=(const bigint& var);
+	bigint& operator^=(long long n);
+
+
 
 	friend std::ostream& operator<<(std::ostream& out, bigint& var);
 	friend std::istream& operator>>(std::istream& in, bigint& var);
-	friend bigint& operator+(bigint& var1, bigint& var2);
+	friend bigint operator+(const bigint& var1, const bigint& var2);
 };
+
+bigint operator+(const bigint& var1, const bigint& var2)
+{
+	bigint res = var1;
+	res += var2;
+	return res;
+}
 
 //Trả về độ dài mảng động
 int bigint::byte()
@@ -107,13 +116,20 @@ void bigint::output()
 		putchar(numText[i]);
 }
 
+int count = 0;
+
 //Giải phóng bộ nhớ
 void bigint::free()
 {
-	delete[] numText;
+	printf("Lan %d\n", ++count);
+	if (numText)
+	{
+		delete[] numText;
+		numText = NULL;
+	}
 }
 
-//Loại bỏ số 0 thừa. Ví dụ : 036 -> 36
+//Loại bỏ số 0 thừa. Ví dụ : 0036 -> 36
 void bigint::clear()
 {
 	for (; sizeNum > 1 && numText[sizeNum - 1] == '0'; sizeNum--);
@@ -150,11 +166,15 @@ void bigint::malloc(int sizeByte)
 //Hàm hủy
 bigint::~bigint()
 {
-	delete[] numText;
+	if (numText)
+	{
+		delete[] numText;
+		numText = NULL;
+	}
 }
 
 //Khởi tạo sao chép
-bigint::bigint(bigint& var)
+bigint::bigint(const bigint& var)
 {
 	*this = var;
 }
@@ -178,41 +198,25 @@ bigint::bigint(long long value)
 //==================================================
 //=====     Toán tử     =====
 
-/*bigint global;
-bigint& operator+(bigint& var1, bigint& var2)
-{
-	if (&global == &var1)
-	{
-		global += var2;
-		return global;
-	}
-
-	if (&global == &var2)
-	{
-		global += var1;
-		return global;
-	}
-
-	global = var1;
-	global += var2;
-	return global;
-}*/
-
-void bigint::operator^=(long long n)
+bigint& bigint::operator^=(long long n)
 {
 	bigint temp = *this;
 	Exponential(*this, temp, n);
+	return *this;
 }
 
-void bigint::operator*=(bigint& var)
+bigint& bigint::operator*=(const bigint& var)
 {
-	DivideAndConquer(*this, *this, var, 0);
+	bigint temp = var;
+	DivideAndConquer(*this, *this, temp, 0);
+	return *this;
 }
 
-void bigint::operator-=(bigint& var)
+bigint& bigint::operator-=(const bigint& var)
 {
-	if (var == 0)
-		return;
+	//var == 0
+	if (var.isPositive && var.sizeNum == 1 && *var.numText == '0')
+		return *this;
 
 	if (isPositive == var.isPositive)	//Cùng dấu
 	{
@@ -232,12 +236,15 @@ void bigint::operator-=(bigint& var)
 		realloc(std::max(sizeNum, var.sizeNum) + 1);
 		sizeNum = Add(numText, numText, sizeNum, var.numText, var.sizeNum);
 	}
+
+	return *this;
 }
 
-void bigint::operator+=(bigint& var)
+bigint& bigint::operator+=(const bigint& var)
 {
-	if (var == 0)
-		return;
+	//var == 0
+	if (var.isPositive && var.sizeNum == 1 && *var.numText == '0')
+		return *this;
 
 	if (isPositive == var.isPositive)	//Cùng dấu
 	{
@@ -257,9 +264,11 @@ void bigint::operator+=(bigint& var)
 		}
 		realloc(sizeNum);
 	}
+
+	return *this;
 }
 
-bool bigint::operator<=(bigint& var)
+bool bigint::operator<=(const bigint& var)
 {
 	if (isPositive != var.isPositive)	//Trái dấu
 		return var.isPositive;
@@ -272,7 +281,7 @@ bool bigint::operator<=(bigint& var)
 		return compare >= 0;
 }
 
-bool bigint::operator>=(bigint& var)
+bool bigint::operator>=(const bigint& var)
 {
 	if (isPositive != var.isPositive)	//Trái dấu
 		return isPositive;
@@ -285,7 +294,7 @@ bool bigint::operator>=(bigint& var)
 		return compare <= 0;
 }
 
-bool bigint::operator>(bigint& var)
+bool bigint::operator>(const bigint& var)
 {
 	if (isPositive != var.isPositive)	//Trái dấu
 		return isPositive;
@@ -298,7 +307,7 @@ bool bigint::operator>(bigint& var)
 		return compare < 0;
 }
 
-bool bigint::operator<(bigint& var)
+bool bigint::operator<(const bigint& var)
 {
 	if (isPositive != var.isPositive)	//Trái dấu
 		return var.isPositive;
@@ -327,7 +336,7 @@ bool bigint::operator==(bool value)
 }
 
 //So sánh hai Big Int
-bool bigint::operator==(bigint& var)
+bool bigint::operator==(const bigint& var)
 {
 	//Khác độ dài hoặc khác dấu
 	if (sizeNum != var.sizeNum || isPositive != var.isPositive)
@@ -340,7 +349,7 @@ bool bigint::operator==(bigint& var)
 }
 
 //Gán bằng
-void bigint::operator=(long long value)
+bigint& bigint::operator=(long long value)
 {
 	free();
 	malloc(countLength(value));
@@ -355,14 +364,15 @@ void bigint::operator=(long long value)
 		isPositive = true;
 	for (int i = 0; i < sizeNum; i++, value /= 10)
 		numText[i] = value % 10 + '0';
+	return *this;
 }
 
 //Gán bằng
-void bigint::operator=(const bigint& var)
+bigint& bigint::operator=(const bigint& var)
 {
 	//Nếu là chính nó, hàm kết thúc
 	if (this == &var)
-		return;
+		return *this;
 
 	free();
 	malloc(var.sizeNum);
@@ -371,16 +381,7 @@ void bigint::operator=(const bigint& var)
 	for (int i = 0; i < sizeNum; i++)
 		numText[i] = var.numText[i];
 	isPositive = var.isPositive;
-}
-
-//Tham chiếu vào cùng bộ nhớ
-void bigint::operator>>(bigint& var)
-{
-	free();
-	numText = var.numText;
-	sizeData = var.sizeData;
-	sizeNum = var.sizeNum;
-	isPositive = var.isPositive;
+	return *this;
 }
 //==================================================
 //=====     Private Function     =====
