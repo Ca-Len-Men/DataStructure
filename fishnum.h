@@ -47,9 +47,8 @@ public:
 	//Toán tử
 
 	bigint& operator=(const bigint& var);
-	bigint& operator=(long long value);
-
 	bool operator==(const bigint& var);
+	bool operator!=(const bigint& var);
 	bool operator==(bool value);
 	bool operator!=(bool value);
 	bool operator<(const bigint& var);
@@ -62,19 +61,14 @@ public:
 	bigint& operator*=(const bigint& var);
 	bigint& operator^=(long long n);
 
+	//Hàm bạn
 
-
-	friend std::ostream& operator<<(std::ostream& out, bigint& var);
+	friend std::ostream& operator<<(std::ostream& out, const bigint& var);
 	friend std::istream& operator>>(std::istream& in, bigint& var);
 	friend bigint operator+(const bigint& var1, const bigint& var2);
+	friend bigint operator-(const bigint& var1, const bigint& var2);
+	friend bigint operator*(const bigint& var1, const bigint& var2);
 };
-
-bigint operator+(const bigint& var1, const bigint& var2)
-{
-	bigint res = var1;
-	res += var2;
-	return res;
-}
 
 //Trả về độ dài mảng động
 int bigint::byte()
@@ -111,7 +105,6 @@ void bigint::input(const char* title)
 void bigint::output()
 {
 	if (!isPositive)	putchar('-');
-	//char* s = numText + sizeNum - 1;
 	for (int i = sizeNum - 1; i >= 0; i--)
 		putchar(numText[i]);
 }
@@ -121,7 +114,6 @@ int count = 0;
 //Giải phóng bộ nhớ
 void bigint::free()
 {
-	printf("Lan %d\n", ++count);
 	if (numText)
 	{
 		delete[] numText;
@@ -176,6 +168,7 @@ bigint::~bigint()
 //Khởi tạo sao chép
 bigint::bigint(const bigint& var)
 {
+	this->numText = NULL;
 	*this = var;
 }
 
@@ -197,6 +190,27 @@ bigint::bigint(long long value)
 }
 //==================================================
 //=====     Toán tử     =====
+
+bigint operator*(const bigint& var1, const bigint& var2)
+{
+	bigint res = var1;
+	res *= var2;
+	return res;
+}
+
+bigint operator-(const bigint& var1, const bigint& var2)
+{
+	bigint res = var1;
+	res -= var2;
+	return res;
+}
+
+bigint operator+(const bigint& var1, const bigint& var2)
+{
+	bigint res = var1;
+	res += var2;
+	return res;
+}
 
 bigint& bigint::operator^=(long long n)
 {
@@ -336,6 +350,19 @@ bool bigint::operator==(bool value)
 }
 
 //So sánh hai Big Int
+bool bigint::operator!=(const bigint& var)
+{
+	//Khác độ dài hoặc khác dấu
+	if (isPositive != var.isPositive || sizeNum != var.sizeNum)
+		return true;
+
+	for (int i = 0; i < sizeNum; i++)
+		if (numText[i] != var.numText[i])
+			return true;
+	return false;
+}
+
+//So sánh hai Big Int
 bool bigint::operator==(const bigint& var)
 {
 	//Khác độ dài hoặc khác dấu
@@ -346,25 +373,6 @@ bool bigint::operator==(const bigint& var)
 		if (numText[i] != var.numText[i])
 			return false;
 	return true;
-}
-
-//Gán bằng
-bigint& bigint::operator=(long long value)
-{
-	free();
-	malloc(countLength(value));
-
-	//Dấu của Big Int
-	if (value < 0)
-	{
-		isPositive = false;
-		value = -value;
-	}
-	else
-		isPositive = true;
-	for (int i = 0; i < sizeNum; i++, value /= 10)
-		numText[i] = value % 10 + '0';
-	return *this;
 }
 
 //Gán bằng
@@ -580,9 +588,11 @@ std::istream& operator>>(std::istream& in, bigint& var)
 	return in;
 }
 
-std::ostream& operator<<(std::ostream& out, bigint& var)
+std::ostream& operator<<(std::ostream& out, const bigint& var)
 {
-	var.output();
+	if (!var.isPositive)	putchar('-');
+	for (int i = var.sizeNum - 1; i >= 0; i--)
+		putchar(var.numText[i]);
 	return out;
 }
 
