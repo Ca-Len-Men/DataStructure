@@ -1105,7 +1105,7 @@ void AVLTree<key, value>::outputRecursiveLNR(node*& root, const int& weight, int
 	if (root == nullptr)
 		return;
 
-	outputRecursiveLNR(root->left, weight, count + 1, true);
+	outputRecursiveLNR(root->right, weight, count + 1, true);
 
 	if (count)
 		for (int i = weight * count; i > 0; i--)
@@ -1113,7 +1113,7 @@ void AVLTree<key, value>::outputRecursiveLNR(node*& root, const int& weight, int
 	std::cout << (leftChild ? '/' : '\\');
 	std::cout << std::setw(weight - 2) << root->info.getKey() << "|\n";
 
-	outputRecursiveLNR(root->right, weight, count + 1, false);
+	outputRecursiveLNR(root->left, weight, count + 1, false);
 }
 
 template <class key, class value>
@@ -1182,9 +1182,9 @@ void AVLTree<key, value>::output() const
 		return;
 	}
 
-	outputRecursiveLNR(root->left, weightOut, 1, true);
+	outputRecursiveLNR(root->right, weightOut, 1, true);
 	std::cout << '|' << std::setw(weightOut - 2) << root->info.getKey() << "|\n";
-	outputRecursiveLNR(root->right, weightOut, 1, false);
+	outputRecursiveLNR(root->left, weightOut, 1, false);
 }
 //==================================================
 //==========          Red Black Tree          ==========
@@ -1208,14 +1208,211 @@ class RBTree {
 		//Method
 		void connectLeft(node* leftChild) {
 			left = leftChild;
-			leftChild->parent = this;
+			if(leftChild)
+				leftChild->parent = this;
 		}
 
 		void connectRight(node* rightChild) {
 			right = rightChild;
-			rightChild->parent = this;
+			if(rightChild)
+				rightChild->parent = this;
+		}
+
+		//Static function
+		static void rotateRight(node*& root){
+			if (root->left == nullptr)
+				return;
+
+			node* rootParent = root->parent;
+			node* temp = root->left;
+			root->connectLeft(temp->right);
+			temp->connectRight(root);
+			root = temp;
+			temp->parent = rootParent;
+		}
+
+		static void rotateLeft(node*& root) {
+			if (root->right == nullptr)
+				return;
+
+			node* rootParent = root->parent;
+			node* temp = root->right;
+			root->connectRight(temp->left);
+			temp->connectLeft(root);
+			root = temp;
+			temp->parent = rootParent;
+		}
+
+		static node* uncle(node* n) {
+			if (n->parent == n->parent->parent->left)
+				return n->parent->parent->right;
+			else
+				return n->parent->parent->left;
+		}
+
+		static node*& refGrandParent(node* n) {
+			node* grandParent = n->parent->parent;
+			if (grandParent->parent->left == grandParent)
+				return grandParent->parent->left;
+			else
+				return grandParent->parent->right;
+		}
+
+		//n là Root
+		static void insertCase1(node*& root, node*& n) {
+			if (n->parent == nullptr)
+				n->color = colors::BLACK;
+			else
+				insertCase2(root, n);
+		}
+
+		//Parent màu đen
+		static void insertCase2(node*& root, node*& n) {
+			if (n->parent->color == colors::BLACK)
+				return;
+			insertCase3(root, n);
+		}
+
+		//n, parent, uncle màu đỏ
+		static void insertCase3(node*& root, node*& n) {
+			node* Uncle = uncle(n);
+			if (Uncle != nullptr && Uncle->color == colors::RED)
+			{
+				Uncle->color = n->parent->color = colors::BLACK;
+				n->parent->parent->color = colors::RED;
+
+				if (n->parent->parent == root)
+					insertCase1(root, n->parent->parent);
+				else
+					insertCase1(root, refGrandParent(n));
+			} else
+				insertCase4(root, n);
+		}
+
+		//n, parent màu đỏ, uncle màu đen
+		static void insertCase4(node*& root, node*& n) {
+			node* grandParend = n->parent->parent;
+			if (n == n->parent->right && n->parent == grandParend->left) {
+				rotateLeft(grandParend->left);
+				insertCase5(root, grandParend->left->left);
+				return;
+			}
+			else if (n == n->parent->left && n->parent == grandParend->right) {
+				rotateRight(grandParend->right);
+				insertCase5(root, grandParend->right->right);
+				return;
+			}
+
+			insertCase5(root, n);
+		}
+
+		static void insertCase5(node*& root, node*& n) {
+			node* grandParent = n->parent->parent;
+			grandParent->color = colors::RED;
+			n->parent->color = colors::BLACK;
+
+			if (n == n->parent->left && n->parent == grandParent->left) {
+				if (grandParent == root) rotateRight(root);
+				else rotateRight(refGrandParent(n));
+			} else {
+				if (grandParent == root) rotateLeft(root);
+				else rotateLeft(refGrandParent(n));
+			}
 		}
 	};
+
+	static void outputRecursiveLNR(node*& root, const int& weight, int count, bool leftChild);
+
+	node* root;
+	int size, weightOut;
+public:
+	//Constructor
+	RBTree(int setWeight = 10) :
+		root{ nullptr }, size{ 0 }, weightOut{ setWeight }
+	{
+		if (weightOut < 10)
+			weightOut = 10;
+	}
+
+	//Method
+	void output() const;
+	void push(const bucket<key, value>& newBucket);
 };
+
+template <class key, class value>
+void RBTree<key, value>::push(const bucket<key, value>& newBucket)
+{
+	if (!newBucket.isFull())
+		return;
+
+	if (root == nullptr)
+	{
+		root = new node(newBucket);
+		root->color = colors::BLACK;
+		size = 1;
+		return;
+	}
+
+	node* p = root;
+	while (p)
+	{
+		if (p->info == newBucket)
+		{
+			p->info = newBucket;
+			return;
+		}
+		else if (p->info > newBucket) {
+			if (p->left == nullptr)
+			{
+				p->connectLeft(new node(newBucket));
+				node::insertCase1(root, p->left);
+				size++;
+				return;
+			}
+			p = p->left;
+		}
+		else {
+			if (p->right == nullptr)
+			{
+				p->connectRight(new node(newBucket));
+				node::insertCase1(root, p->right);
+				size++;
+				return;
+			}
+			p = p->right;
+		}
+	}
+}
+
+template <class key, class value>
+void RBTree<key, value>::outputRecursiveLNR(node*& root, const int& weight, int count, bool leftChild)
+{
+	if (root == nullptr)
+		return;
+
+	outputRecursiveLNR(root->right, weight, count + 1, true);
+
+	if (count)
+		for (int i = weight * count; i > 0; i--)
+			putchar(' ');
+	std::cout << (leftChild ? '/' : '\\');
+	std::cout << std::setw(weight - 2) << root->info.getKey() << "|\n";
+
+	outputRecursiveLNR(root->left, weight, count + 1, false);
+}
+
+template <class key, class value>
+void RBTree<key, value>::output() const
+{
+	if (root == nullptr)
+	{
+		std::cout << "Tree is empty\n";
+		return;
+	}
+
+	outputRecursiveLNR(root->right, weightOut, 1, true);
+	std::cout << '|' << std::setw(weightOut - 2) << root->info.getKey() << "|\n";
+	outputRecursiveLNR(root->left, weightOut, 1, false);
+}
 //==================================================
 #endif	//_FISH_BASIC_
