@@ -1,4 +1,4 @@
-# Series Data Structure and Algorithm 💻🖥️🖱️
+# Data Structure and Algorithm 💻🖥️🖱️
     🧑‍🎓 : Learning C++ with Fish 🤎
     Nhấp vào "Object" để xem chi tiết
 # Bao gồm :
