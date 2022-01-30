@@ -1,8 +1,16 @@
+# Series Data Structure and Algorithm 💻🖥️🖱️
+    🧑‍🎓 : Learning C++ with Fish 🤎
+    Nhấp vào "Object" để xem chi tiết
+# Bao gồm :
+    ▶️ : Danh sách liên kết đơn
+    ▶️ : Ngăn xếp
+    ▶️ : Hàng đợi
+    ▶️ : AVL Tree
+    ▶️ : Red Black Tree
 # fishbasic.h gồm :
-    + Ngăn xếp                : stack<int> st;
-    + Hàng đợi                : queue<int> qu;
-  
-# fishnum.h gồm :
-    + Big Num                 : bigint var = 123456789;
-
-## Chúc bạn học tập tốt <3
+    ➡️ : SList.h
+    ➡️ : stack.h
+    ➡️ : queue.h
+    ➡️ : AVLTree.h
+    ➡️ : RBTree.h
+## Chúc bạn học tập tốt 💙😙
