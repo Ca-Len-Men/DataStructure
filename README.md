@@ -5,8 +5,8 @@
     ▶️ : Danh sách liên kết đơn
     ▶️ : Ngăn xếp
     ▶️ : Hàng đợi
-    ▶️ : AVL Tree
-    ▶️ : Red Black Tree
+    ▶️ : Cây AVL
+    ▶️ : Cây đỏ đen
 # fishbasic.h gồm :
     ➡️ : SList.h
     ➡️ : stack.h
