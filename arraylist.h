@@ -1,9 +1,13 @@
 #ifndef _ARRAY_LIST_
 #define _ARRAY_LIST_
-#define _CRT_SECURE_NO_WARNINGS_
+
+#pragma region Include
 #include<iostream>
 #include<initializer_list>
 #include<conio.h>
+#pragma endregion
+
+#pragma region Syntax
 
 #ifndef _DEFINE_SYNTAX_
 #define _DEFINE_SYNTAX_
@@ -15,327 +19,509 @@
 #define wait _getch()
 #endif
 
-/*
-*******************************************************
-				ARRAY LIST LIBRARY					  *
-- There have : ARRAY LIST							  *
-Syntax :											  *
-	arraylist<typename> arr;						  *
-*******************************************************
-*/
+#pragma endregion
 
-//**************************************************
-//==========          ARRAY LIST          ==========
+/*===================================================
+Author : Ca Len Men									=
+Dynamic Array : dynamicarray<typename>				=
+Array List : arraylist<typename>					=
+==================================================*/
 
-/*Arraylist is a dynamic array.
-You must have constructor for your data type.*/
+//##################################################
+//==========          Dynamic Array          ==========
 template <class data>
-class arraylist {
-	
-	//=====     Private Methods     =====
-	void changeCapacity(size_t newCapacity) {
-		data** tempPtr = this->ptr;
-		this->ptr = new data * [newCapacity];
-
-		if (newCapacity < this->capacity) {
-			uFOR(i, 0, newCapacity)
-				this->ptr[i] = tempPtr[i];
-		} else {
-			uFOR(i, 0, this->capacity)
-				this->ptr[i] = tempPtr[i];
-			uFOR(i, this->capacity, newCapacity)
-				this->ptr[i] = nullptr;
-		}
-
-		this->capacity = newCapacity;
-		delete[] tempPtr;
-	}
-	size_t countCapacity(size_t numElement) const  {
-		return (numElement / this->spaceMemory + 1) * this->spaceMemory;
-	}
-	void shellSort(data** arr, int n) {
-		data* temp;
-		int a[] = { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23,
-			29, 31, 37, 41, 43, 47, 53, 57, 61, 67}, space;
-
-		for (int k = 19; k >= 0; --k) {
-			space = a[k];
-
-			for (int i = space; i < n; i += space)
-			{
-				int j = i - space;
-				temp = arr[i];
-
-				for (; j >= 0 && *temp < *arr[j]; j -= space)
-					arr[j + space] = arr[j];
-				arr[j + space] = temp;
-			}
-		}
-	}
-	void mergeSort(data** arr, size_t left, size_t right) {
-		if (right - left < 100) {
-			shellSort(arr + left, right - left + 1);
+class dynamicarray {
+protected:
+#pragma region Protected Area
+	void newCapacity(bool expand) {
+		if (this->capacity == 1 && expand == false)
 			return;
-		}
-
-		size_t mid = (left + right) / 2;
-		mergeSort(arr, left, mid);
-		mergeSort(arr, mid + 1, right);
-		if (*arr[mid] < *arr[mid + 1])
-			return;
-
-		data** ptrLeft, ** ptrRight(arr + mid + 1);
-		size_t lengthLeft = mid - left + 1;
-		size_t lengthRight = right - mid;
-		size_t l = 0, r = 0, k = left;
-
-		ptrLeft = new data * [lengthLeft];
-		for (size_t i = left; i <= mid; ++i)
-			ptrLeft[i - left] = arr[i];
-
-		for (; l < lengthLeft && r < lengthRight; ++k)
-			if (*ptrLeft[l] < *ptrRight[r])
-				arr[k] = ptrLeft[l++];
-			else
-				arr[k] = ptrRight[r++];
-		for(; l < lengthLeft; ++k, ++l)
-			arr[k] = ptrLeft[l];
+		data* res = this->ptr;
+		//expand is true -> capacity x 2, else capacity / 2
+		expand ? this->capacity <<= 1 : this->capacity >>= 1;
+		this->ptr = new data[this->capacity];
+		uFOR(i, 0, this->size)
+			this->ptr[i] = res[i];
+		delete[] res;
 	}
 
-	void shellSort(data** arr, int n,
-		bool(&compareFunction)(const data& a, const data& b)) {
-		data* temp;
-		int a[] = { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23,
-			29, 31, 37, 41, 43, 47, 53, 57, 61, 67 }, space;
-
-		for (int k = 19; k >= 0; --k) {
-			space = a[k];
-
-			for (int i = space; i < n; i += space)
-			{
-				int j = i - space;
-				temp = arr[i];
-
-				for (; j >= 0 && compareFunction(*temp, *arr[j]); j -= space)
-					arr[j + space] = arr[j];
-				arr[j + space] = temp;
-			}
+	void newCapacity(size_t newCap, bool maintain_data = true)
+	{
+		if (maintain_data)
+		{
+			if (newCap < this->size) return;
+			data* res = this->ptr;
+			this->ptr = new data[this->capacity = newCap];
+			uFOR(i, 0, this->size)
+				this->ptr[i] = res[i];
+			delete[] res;
+		}else {
+			delete[] this->ptr;
+			this->ptr = new data[this->capacity = newCap];
 		}
+		
 	}
-	void mergeSort(data** arr, size_t left, size_t right,
-		bool(&compareFunction)(const data& a, const data& b)) {
-		if (right - left < 100) {
-			shellSort(arr + left, right - left + 1, compareFunction);
-			return;
-		}
+#pragma endregion
 
-		size_t mid = (left + right) / 2;
-		mergeSort(arr, left, mid, compareFunction);
-		mergeSort(arr, mid + 1, right, compareFunction);
-		if (compareFunction(*arr[mid], *arr[mid + 1]))
-			return;
-
-		data** ptrLeft, ** ptrRight(arr + mid + 1);
-		size_t lengthLeft = mid - left + 1;
-		size_t lengthRight = right - mid;
-		size_t l = 0, r = 0, k = left;
-
-		ptrLeft = new data * [lengthLeft];
-		for (size_t i = left; i <= mid; ++i)
-			ptrLeft[i - left] = arr[i];
-
-		for (; l < lengthLeft && r < lengthRight; ++k)
-			if (compareFunction(*ptrLeft[l], *ptrRight[r]))
-				arr[k] = ptrLeft[l++];
-			else
-				arr[k] = ptrRight[r++];
-		for (; l < lengthLeft; ++k, ++l)
-			arr[k] = ptrLeft[l];
-	}
-
-	//=====     Attributes     =====
-	data** ptr;
+#pragma region Attributes
+public:
+	data* ptr;
 	size_t size;
 	size_t capacity;
-	size_t spaceMemory;
+#pragma endregion
+
+#pragma region Constructors And Destructor
+protected:
+	dynamicarray(size_t Capacity) : size{ 0 }, capacity{ Capacity }
+	{ this->ptr = new data[this->capacity]; }
 
 public:
-	//=====     Constructors, Destructor     =====
-	
-	template <int n>
-	arraylist(data (&arr)[n], size_t spaceCapacity = 20);
-	arraylist(std::initializer_list<data> list, size_t spaceCapacity = 20);
-	arraylist(size_t spaceCapacity = 20);
-	arraylist(const arraylist& source);
-	arraylist(arraylist&& source) noexcept;
-	~arraylist();
+	//Default Constructors
+	dynamicarray() : size{ 0 }, capacity{ 1 }
+	{ this->ptr = new data[this->capacity]; }
 
-	//=====     Methods     =====
-
-/*Thêm một phần tử vào cuối mảng
-Độ phức tạp thời gian : O(1) hoặc O(n)*/
-	void pushBack(const data& item) {
-		this->ptr[this->size++] = new data(item);
-		if (this->size == this->capacity)
-			changeCapacity(this->capacity + this->spaceMemory);
+	dynamicarray(std::initializer_list<data> list) :
+		size{ list.size() }, capacity{ list.size() }
+	{
+		this->ptr = new data[this->capacity];
+		const data* pointer = list.begin();
+		uFOR(i, 0, this->size)
+			this->ptr[i] = pointer[i];
 	}
 
-/*Thêm một phần tử vào đầu mảng
-Độ phức tạp thời gian : O(n)*/
-	void pushFront(const data& item) {
+	dynamicarray(const dynamicarray& source) :
+		size{ source.size }, capacity{ source.capacity }
+	{
+		this->ptr = new data[this->capacity];
+		uFOR(i, 0, this->size)
+			this->ptr[i] = source.ptr[i];
+	}
+
+	dynamicarray(dynamicarray&& source) noexcept :
+		size{ source.size }, capacity{ source.capacity }
+	{
+		this->ptr = source.ptr;
+		source.ptr = nullptr;
+	}
+
+	//Destructor
+	virtual ~dynamicarray()
+	{
+		delete[] this->ptr;
+	}
+#pragma endregion
+
+#pragma region Methods
+	//Add an item at the end
+	void pushBack(const data& item)
+	{
+		if (this->size == this->capacity)
+			newCapacity(true);
+		this->ptr[this->size++] = item;
+	}
+
+	//Add an item before the first item
+	void pushFront(const data& item)
+	{
+		if (this->size == this->capacity)
+			newCapacity(true);
 		uRFOR(i, this->size, 1)
 			this->ptr[i] = this->ptr[i - 1];
-		this->ptr[0] = new data(item);
-		if (++this->size == this->capacity)
-			changeCapacity(this->capacity + this->spaceMemory);
-	}
-
-/*Chèn một phần tử vào vị trí index
-#Nếu index nằm ngoài phạm vi, phần tử được đưa vào cuối mảng
-Độ phức tạp thời gian : O(1) hoặc O(n)*/
-	void pushAt(const data& item, size_t index) {
-		if (index >= this->size) {
-			pushBack(item);
-			return;
-		}
-
-		if (index == 0) {
-			pushFront(item);
-			return;
-		}
-
-		uRFOR(i, this->size - 1, index)
-			this->ptr[i + 1] = this->ptr[i];
-		this->ptr[index] = new data(item);
+		this->ptr[0] = item;
 		++this->size;
+	}
+
+	//Insert an item at any index
+	void pushAt(const data& item, size_t index)
+	{
+		if (index > this->size)
+			return;
 		if (this->size == this->capacity)
-			changeCapacity(this->capacity + this->spaceMemory);
+			newCapacity(true);
+
+		for (size_t i = this->size; i > index; --i)
+			this->ptr[i] = this->ptr[i - 1];
+		this->ptr[index] = item;
+		++this->size;
 	}
 
-/*Xóa một phần tử ở cuối mảng
-Độ phức tạp thời gian : O(1) hoặc O(n)*/
-	void popBack() {
-		delete this->ptr[this->size - 1];
-		this->ptr[--this->size] = nullptr;
-
-		if (this->size < this->capacity - spaceMemory)
-			changeCapacity(this->capacity - spaceMemory);
+	//Delete last item
+	void popBack()
+	{
+		if (this->size == 0)
+			return;
+		--this->size;
+		if (this->size == this->capacity >> 1)	//size == capacity / 2
+			newCapacity(false);
 	}
 
-/*Xóa một phần tử ở đầu mảng
-Độ phức tạp thời gian : O(n)*/
-	void popFront() {
-		delete this->ptr[0];
+	//Delete first item
+	void popFront()
+	{
+		if (this->size == 0)
+			return;
 		uFOR(i, 1, this->size)
 			this->ptr[i - 1] = this->ptr[i];
-		this->ptr[--this->size] = nullptr;
-
-		if (this->size < this->capacity - this->spaceMemory)
-			changeCapacity(this->capacity - this->spaceMemory);
+		--this->size;
+		if (this->size == this->capacity >> 1)	//size == capacity / 2
+			newCapacity(false);
 	}
 
-/*Xóa một phần tử tại chỉ số index
-#Nếu index nằm ngoài phạm vi, không phần tử nào bị xóa
-Độ phức tạp thời gian : O(n)*/
-	void popAt(size_t index) {
-		if (index >= this->size)
+	//Delete an item at any index
+	void popAt(size_t index)
+	{
+		if (this->size == 0)
 			return;
-
-		delete this->ptr[index];
 		uFOR(i, index + 1, this->size)
 			this->ptr[i - 1] = this->ptr[i];
-		this->ptr[--this->size] = nullptr;
-
-		if (this->size < this->capacity - this->spaceMemory)
-			changeCapacity(this->capacity - this->spaceMemory);
+		--this->size;
+		if (this->size == this->capacity >> 1)	//size == capacity / 2
+			newCapacity(false);
 	}
 
-/*Xóa một phần tử element đầu tiên trong mảng
-Nếu không tồn tại, không phần tử nào bị xóa
-Trả về true nếu xóa thành công, ngược lại trả về false
-#Cần toán tử so sánh == hai kiểu data ( bool operator==(const data&) )
-Độ phức tạp thời gian : O(n)*/
-	bool pop(const data& element) {
+	//Writing on console
+	virtual void out() const {
+		if (this->size == 0) {
+			std::cout << "Array List is empty !" << std::endl;
+			return;
+		}
+
 		uFOR(i, 0, this->size)
-			if (*this->ptr[i] == element) {
+			std::cout << this->ptr[i] << ' ';
+		std::cout << std::endl;
+	}
+
+	//Check for empty array
+	virtual bool empty() const {
+		return this->size == 0;
+	}
+
+	//Length of array
+	virtual size_t length() const {
+		return this->size;
+	}
+
+	//Capacity of array
+	virtual size_t limit() const {
+		return this->capacity;
+	}
+
+#pragma endregion
+
+#pragma region Operators
+	//Check array is not empty
+	virtual operator bool()
+	{
+		return this->size != 0;
+	}
+
+	//Access data at any index
+	data& operator[](size_t index) {
+		return this->ptr[index];
+	}
+
+	//Copy data from other dynamic array
+	dynamicarray& operator=(const dynamicarray& source)
+	{
+		if (this == &source)
+			return *this;
+
+		delete[] this->ptr;
+		this->size = source.size;
+		this->capacity = source.capacity;
+		this->ptr = new data[this->capacity];
+		uFOR(i, 0, this->size)
+			this->ptr[i] = source.ptr[i];
+		return *this;
+	}
+
+	//Copy data from other dynamic array
+	dynamicarray& operator=(dynamicarray&& source) noexcept
+	{
+		delete[] this->ptr;
+		this->size = source.size;
+		this->capacity = source.capacity;
+		this->ptr = source.ptr;
+		source.ptr = nullptr;
+		return *this;
+	}
+
+	//Copy data from std::initializer_list
+	dynamicarray& operator=(std::initializer_list<data> source)
+	{
+		delete[] this->ptr;
+		this->size = this->capacity = source.size();
+		this->ptr = new data[this->capacity];
+		const data* pointer = source.begin();
+		uFOR(i, 0, this->size)
+			this->ptr[i] = pointer[i];
+		return *this;
+	}
+#pragma endregion
+};
+//==================================================
+
+//##################################################
+//==========          Array List          ==========
+template <class data>
+class arraylist : protected dynamicarray<data*> {
+private:
+	using base = dynamicarray<data*>;
+
+#pragma region Private Methods
+	//Sort up ascending
+	void mergeSort(size_t left, size_t right)
+	{
+		if (left >= right) return;
+		size_t mid = (left + right) / 2u;
+		mergeSort(left, mid);
+		mergeSort(mid + 1u, right);
+		if (*this->ptr[mid] <= *this->ptr[mid + 1u]) return;
+
+		data** pointer = this->ptr + left;
+		size_t i = 0u, j = 0u, k = 0u;
+		left = mid - left + 1u;
+		right = right - mid;
+		data** ptrLeft = new data * [left],
+			** ptrRight = this->ptr + mid + 1u;
+		
+		for(; i < left; ++i)
+			ptrLeft[i] = pointer[i];
+		for (i = 0u; i < left && j < right; ++k)
+			if (*ptrLeft[i] <= *ptrRight[j])
+				pointer[k] = ptrLeft[i++];
+			else
+				pointer[k] = ptrRight[j++];
+		for(; i < left; ++i, ++k)
+			pointer[k] = ptrLeft[i];
+		delete[] ptrLeft;
+	}
+
+	//Sort up ascending
+	template <class Functor>
+	void mergeSort(Functor functor, size_t left, size_t right)
+	{
+		if (left >= right) return;
+		size_t mid = (left + right) / 2u;
+		mergeSort(functor, left, mid);
+		mergeSort(functor, mid + 1u, right);
+		if (functor(*this->ptr[mid], *this->ptr[mid + 1u])) return;
+
+		data** pointer = this->ptr + left;
+		size_t i = 0u, j = 0u, k = 0u;
+		left = mid - left + 1u;
+		right = right - mid;
+		data** ptrLeft = new data * [left],
+			** ptrRight = this->ptr + mid + 1u;
+
+		for (; i < left; ++i)
+			ptrLeft[i] = pointer[i];
+		for (i = 0u; i < left && j < right; ++k)
+			if (functor(*ptrLeft[i], *ptrRight[j]))
+				pointer[k] = ptrLeft[i++];
+			else
+				pointer[k] = ptrRight[j++];
+		for (; i < left; ++i, ++k)
+			pointer[k] = ptrLeft[i];
+		delete[] ptrLeft;
+	}
+#pragma endregion
+
+#pragma region Attributes
+#pragma endregion
+
+public:
+	//=====     Constructors And Destructor     =====//
+#pragma region Constructors And Destructor
+	arraylist() : base()
+	{ this->ptr[0] = nullptr; }
+
+	arraylist(std::initializer_list<data> list) :
+		base(list.size())
+	{
+		this->size = list.size();
+		const data* pointer = list.begin();
+		uFOR(i, 0, this->size)
+			this->ptr[i] = new data(pointer[i]);
+	}
+
+	arraylist(const arraylist& source) :
+		base(source.size)
+	{
+		this->size = source.size;
+		uFOR(i, 0, this->size)
+			this->ptr[i] = new data(*source.ptr[i]);
+	}
+
+	template <class anyIterator>
+	arraylist(anyIterator begin, anyIterator end) : base()
+	{
+		for (; begin != end; ++begin)
+			pushBack(*begin);
+	}
+
+	arraylist(arraylist&& source) noexcept
+	{
+		this->size = source.size;
+		this->capacity = source.capacity;
+		this->ptr = source.ptr;
+		source.ptr = nullptr;
+	}
+
+	~arraylist()
+	{
+		if (this->ptr == nullptr)
+			return;
+		uFOR(i, 0, this->size)
+			delete this->ptr[i];
+	}
+#pragma endregion
+
+	//=====     Methods     =====//
+#pragma region Methods
+	//Add a list items at the end
+	void push(std::initializer_list<data> list)
+	{
+		size_t listSize = list.size();
+		size_t newSize = this->size + listSize;
+		if (this->capacity < newSize)
+			base::newCapacity(newSize);
+
+		const data* pointer = list.begin();
+		data** res = this->ptr + this->size;
+		uFOR(i, 0u, listSize)
+			res[i] = new data(pointer[i]);
+		this->size = newSize;
+	}
+
+	//Add an item at the end
+	void pushBack(const data& item)
+	{
+		if (this->size == this->capacity)
+			base::newCapacity(true);
+		this->ptr[this->size++] = new data(item);
+	}
+
+	//Add an item before the first item
+	void pushFront(const data& item)
+	{
+		if (this->size == this->capacity)
+			base::newCapacity(true);
+		uRFOR(i, this->size, 1u)
+			this->ptr[i] = this->ptr[i - 1u];
+		this->ptr[0u] = new data(item);
+		++this->size;
+	}
+
+	//Insert an item at any index
+	void pushAt(const data& item, size_t index)
+	{
+		if (index > this->size)
+			return;
+		if (this->size == this->capacity)
+			base::newCapacity(true);
+
+		for(size_t i = this->size; i > index; --i)
+			this->ptr[i] = this->ptr[i - 1u];
+		this->ptr[index] = new data(item);
+		++this->size;
+	}
+
+	//Remove last item
+	void popBack()
+	{
+		if (this->size == 0u)
+			return;
+		--this->size;
+		delete this->ptr[this->size];
+		if (this->size == this->capacity >> 1u)	//size == capacity / 2
+			base::newCapacity(false);
+	}
+
+	//Remove first item
+	void popFront()
+	{
+		if (this->size == 0u)
+			return;
+		delete this->ptr[0u];
+		uFOR(i, 1u, this->size)
+			this->ptr[i - 1u] = this->ptr[i];
+		--this->size;
+		if (this->size == this->capacity >> 1u)	//size == capacity / 2
+			base::newCapacity(false);
+	}
+
+	//Remove an item at any index
+	void popAt(size_t index)
+	{
+		if (this->size == 0u || index >= this->size)
+			return;
+		delete this->ptr[index];
+		uFOR(i, index + 1u, this->size)
+			this->ptr[i - 1u] = this->ptr[i];
+		--this->size;
+		if (this->size == this->capacity >> 1u)	//size == capacity / 2
+			base::newCapacity(false);
+	}
+
+	//Remove the first item with value equal to val
+	bool pop(const data& val) {
+		uFOR(i, 0u, this->size)
+			if (*this->ptr[i] == val) {
 				popAt(i);
 				return true;
 			}
 		return false;
 	}
 
-/*Xóa tất cả phần tử element trong mảng
-#Cần toán tử so sánh == hai kiểu data ( bool operator==(const data&) )
-Độ phức tạp thời gian : O(n)*/
-	void popAll(const data& element) {
-		size_t count = 0;
-		uFOR(i, 0, this->size)
-			if (*this->ptr[i] == element) {
+	//Remove all items with value equal to val
+	void popAll(const data& val) {
+		size_t count = 0u;
+		uFOR(i, 0u, this->size)
+			if (*this->ptr[i] == val) {
 				delete this->ptr[i];
 				++count;
-			} else this->ptr[i - count] = this->ptr[i];
-		
-		uFOR(i, this->size - count, this->size)
-			this->ptr[i] = nullptr;
+			}
+			else this->ptr[i - count] = this->ptr[i];
+
 		this->size -= count;
-		if (this->size < this->capacity - this->spaceMemory)
-			changeCapacity(this->capacity - this->spaceMemory);
+		base::newCapacity(this->size);
 	}
 
-/*Xóa các phần tử trong đoạn [left, right] hoặc [right, left]
-#Nếu đoạn vượt ngoài phạm vi : đoạn con lớn nhất của nó sẽ bị đảo
-Độ phức tạp thời gian : O(n)*/
+	//Delete items in [left, right]
 	void popIn(size_t left, size_t right) {
-		if (left == right && left == this->size)
+		if (left > right || left >= this->size || right >= this->size)
 			return;
-		if (left > right)
-			std::swap(left, right);
-		if (right >= this->size)
-			right = this->size - 1;
 
-		int count = right - left + 1;
-		int newCapacity = countCapacity(this->size - count);
-
-		//Giải phóng trong đoạn [left, right]
+		size_t count = right - left + 1u;
+		//Free items in [left, right]
 		for (size_t i = left; i <= right; ++i)
 			delete this->ptr[i];
-		
-		//Dời
-		uFOR(i, right + 1, this->size)
+
+		uFOR(i, right + 1u, this->size)
 			this->ptr[i - count] = this->ptr[i];
-		uFOR(i, this->size - count, this->size)
-			this->ptr[i] = nullptr;
-
 		this->size -= count;
-
-		if (newCapacity != this->capacity)
-			changeCapacity(newCapacity);
+		base::newCapacity(this->size);
 	}
 
-/*Đảo toàn bộ mảng
-Độ phức tạp thời gian : O(n)*/
+	//Reversing Array List
 	void reverse() {
-		for (size_t i = 0, j = this->size - 1; i < j; ++i, --j)
+		if (this->size == 0u)
+			return;
+		for (size_t i = 0u, j = this->size - 1u; i < j; ++i, --j)
 			std::swap(this->ptr[i], this->ptr[j]);
 	}
 
-/*Đảo trong một đoạn [left, right] hoặc [right, left]
-#Nếu đoạn vượt ngoài phạm vi : đoạn con lớn nhất của nó sẽ bị đảo
-Độ phức tạp thời gian : O(n)*/
+	//Reversing in [left, right]
 	void reverse(size_t left, size_t right) {
-		if (left == right && left == this->size)
+		if (left > right || left >= this->size || right >= this->size)
 			return;
-		if (left > right)
-			std::swap(left, right);
-		if (right >= this->size)
-			right = this->size - 1;
 
 		for (; left < right; ++left, --right)
 			std::swap(this->ptr[left], this->ptr[right]);
 	}
 
-/*Hoán vị hai mảng
-Độ phức tạp thời gian : O(1)*/
+	//Swapping two Array List
 	void swap(arraylist& source) {
 		if (this == &source)
 			return;
@@ -343,191 +529,241 @@ Trả về true nếu xóa thành công, ngược lại trả về false
 		std::swap(this->capacity, source.capacity);
 		std::swap(this->size, source.size);
 		std::swap(this->ptr, source.ptr);
-		std::swap(this->spaceMemory, source.spaceMemory);
 	}
 
-/*Tìm kiếm tuyến tính
-Tìm bắt đầu từ chỉ số 0, trả về chỉ số của phần tử đầu tiên tìm thấy
-Nếu không tìm thấy, trả về -1
-#Cần toán tử so sánh == hai kiểu data ( bool operator==(const data&) )
-Độ phức tạp thời gian : O(n)*/
-	int find(const data& element) const {
-		for(size_t i = 0; i < this->size; ++i)
-			if (*this->ptr[i] == element)
+	//Search first item with value equal to val
+	int indexOf(const data& val) const {
+		uFOR(i, 0u, this->size)
+			if (*this->ptr[i] == val)
 				return i;
 		return -1;
 	}
 
-/*Tìm kiếm nhị phân 
-Hãy cho biết mảng tăng hay giảm : true - mảng tăng , false - mảng giảm
-Trả về chỉ số phần tử tìm thấy ( không chắc rằng đây là phần tử đầu tiên )
-Nếu không tìm thấy, trả về -1
-#Mảng cần phải được sắp xếp trước khi dùng phương thức này
-#Cần toán tử so sánh ==, <, > hai kiểu data ( bool operator==(const data&) )
-Độ phức tạp thời gian : O(log n)*/
-	int binSearch(const data& element, bool ascending = true) {
-		int left = 0, right = this->size - 1, mid;
+	//Binary search item with value equal to val
+	int binSearch(const data& val, bool ascending = true) {
+		if (this->size == 0u)
+			return -1;
+		size_t left = 0u, right = this->size - 1u, mid;
 
 		if (ascending) {
 			while (left <= right) {
-				mid = (left + right) / 2;
+				mid = (left + right) / 2u;
 
-				if (element == *this->ptr[mid])
+				if (val == *this->ptr[mid])
 					return mid;
-				else if (element < *this->ptr[mid])
-					right = mid - 1;
+				else if (val < *this->ptr[mid])
+					right = mid - 1u;
 				else
-					left = mid + 1;
+					left = mid + 1u;
 			}
-		} else {//Descending
+		}
+		else {//Descending
 			while (left <= right) {
-				mid = (left + right) / 2;
+				mid = (left + right) / 2u;
 
-				if (element == *this->ptr[mid])
+				if (val == *this->ptr[mid])
 					return mid;
-				else if (element > *this->ptr[mid])
-					right = mid - 1;
+				else if (val > *this->ptr[mid])
+					right = mid - 1u;
 				else
-					left = mid + 1;
+					left = mid + 1u;
 			}
 		}
 		//Not found
 		return -1;
 	}
 
-/*Trả về giá trị mới từ phần tử thứ index
-#Chỉ số index phải nằm trong phạm vi của mảng
-Độ phức tạp thời gian : O(1)*/
-	const data& readOnly(size_t index) {
-		return *this->ptr[index];
+	//Array List is being empty
+	void clear() {
+		uFOR(i, 0u, this->size)
+			delete this->ptr[i];
+		this->size = 0u;
+		base::newCapacity(size_t(1u));
 	}
 
-/*Xuất mảng một chiều trên một dòng
-#Cần xuất được kiểu data với std::cout
-Độ phức tạp thời gian : O(n)*/
-	void out() const {
+	//Set Array List include length items with value equal to val
+	void memset(const data& val, size_t length) {
+		uFOR(i, 0u, this->size)
+			delete this->ptr[i];
+
+		base::newCapacity(length, false);
+		this->size = length;
+		uFOR(i, 0u, this->size)
+			this->ptr[i] = new data(val);
+	}
+
+	//Set all items with value equal to val
+	void memset(const data& item) {
+		uFOR(i, 0u, this->size)
+			delete this->ptr[i];
+		uFOR(i, 0u, this->size)
+			this->ptr[i] = new data(item);
+	}
+
+	//Count how many items with value equal to val
+	size_t count(const data& val) const {
+		size_t Count(0u);
+		uFOR(i, 0u, this->size)
+			if (val == *this->ptr[i])
+				++Count;
+		return Count;
+	}
+
+	//Sort up ascending
+	void sort()
+	{
+		mergeSort(0u, this->size - 1u);
+	}
+
+	//Sort up ascending
+	template <class Functor>
+	void sort(Functor functor)
+	{
+		mergeSort(functor, 0, this->size - 1u);
+	}
+
+	//Count how many items if its satisfy the condition
+	template <class Functor>
+	size_t count(Functor functor) const {
+		size_t Count(0u);
 		uFOR(i, 0, this->size)
+			if (functor((const data&)*this->ptr[i]))
+				++Count;
+		return Count;
+	}
+
+	//Loop through each item
+	template <class Functor>
+	void foreach(Functor functor) {
+		uFOR(i, 0, this->size)
+			functor(*this->ptr[i]);
+	}
+
+	template <class Functor>
+	arraylist selectIf(Functor functor) const {
+		arraylist res;
+		uFOR(i, 0u, this->size)
+			if (functor((const data&)*this->ptr[i]))
+				res.pushBack(*this->ptr[i]);
+		return res;
+	}
+
+	//Check all items satisfy the condition
+	template <class Functor>
+	bool all(Functor functor) const {
+		uFOR(i, 0u, this->size)
+			if (functor((const data)*this->ptr[i]) == false)
+				return false;
+		return true;
+	}
+
+	//Check any items satisfy the condition
+	template <class Functor>
+	bool any(Functor functor) const {
+		uFOR(i, 0u, this->size)
+			if (functor((const data)*this->ptr[i]))
+				return true;
+		return false;
+	}
+
+	//Writing on console
+	void out() const override {
+		if (this->size == 0u) {
+			std::cout << "Array List is empty !" << std::endl;
+			return;
+		}
+
+		uFOR(i, 0u, this->size)
 			std::cout << *this->ptr[i] << ' ';
 		std::cout << std::endl;
 	}
 
-/*Xem dung lượng
-	Tham số là nullptr : Byte
-	Tham số là "kb" : KB
-	Tham số còn lại : MB*/
-	void info(const char* typeMemory = nullptr) const {
-		std::cout << "Length : " << this->size << " - Memory : ";
-		size_t myMemory = 3 * sizeof(size_t) + (this->capacity + 1) *
-			sizeof(data*) + this->size * sizeof(data);
-
-		if(typeMemory == nullptr)
-			std::cout << myMemory << " byte\n";
-		else if(_strcmpi(typeMemory, "kb") == 0)
-			std::cout << (myMemory * 1.0 / 1024) << " KB\n";
-		else
-			std::cout << (myMemory * 1.0 / 1048576) << " MB\n";
-	}
-	
-/*Xóa toàn bộ phần tử
-Độ phức tạp thời gian : O(n)*/
-	void clear() {
-		for (size_t i = 0; this->ptr[i]; ++i)
-			delete this->ptr[i];
-		delete[] this->ptr;
-
-		this->size = 0;
-		this->capacity = this->spaceMemory;
-		this->ptr = new data * [this->spaceMemory];
-		uFOR(i, 0, this->capacity)
-			this->ptr[i] = nullptr;
+	//Check for empty array
+	bool empty() const override {
+		return this->size == 0u;
 	}
 
-/*Trả về true nếu mảng rỗng*/
-	bool empty() const {
-		return this->size == 0;
-	}
-
-/*Trả về số lượng phần tử của mảng*/
-	size_t length() const {
+	//Length of array
+	size_t length() const override {
 		return this->size;
 	}
-	
-/*Sắp xếp mảng tăng dần
-#Cần toán tử so sánh < cho kiểu data ( operator<(const data&) )
-Độ phức tạp thời gian : O(n log n) hoặc O(n)
-Độ phức tạp không gian : O(n) hoặc O(log n)*/
-	void sort() {
-		mergeSort(this->ptr, 0, this->size - 1);
+
+	//Capacity of array
+	size_t limit() const override {
+		return this->capacity;
 	}
+#pragma endregion
 
-/*Sắp xếp mảng tăng dần theo một thuộc tính của đối tượng
-#Cần hàm so sánh thứ tự cho kiểu data
-bool (*)(const data& a, const data& b) : trả về true nếu a, b đứng đúng thứ tự
-Độ phức tạp thời gian : O(n log n) hoặc O(n)
-Độ phức tạp không gian : O(n) hoặc O(log n)*/
-	void sort(bool (&compareFunction)(const data& a, const data& b)) {
-		mergeSort(this->ptr, 0, this->size - 1, compareFunction);
-	}
-
-	//=====     Operators     =====
-
-/*Trả về true nếu mảng không rỗng*/
-	operator bool() const {
+	//=====     Operators     =====//
+#pragma region Operators
+	operator bool() override
+	{
 		return this->size != 0;
 	}
 
-/*Trả về tham chiếu phần tử thứ index
-#Chỉ số index phải nằm trong phạm vi của mảng
-Độ phức tạp thời gian : O(1)*/
-	data& operator[](size_t index) {
+	data& operator[](size_t index)
+	{
 		return *this->ptr[index];
 	}
 
-/*Nối mảng thứ hai vào cuối mảng
-Độ phức tạp thời gian : O(n)*/
-	arraylist& operator+=(const arraylist& source) {
-		this->capacity = countCapacity(this->size + source.size);
-		data** res = this->ptr;
-		this->ptr = new data * [this->capacity];
-
-		uFOR(i, 0, this->size)
-			this->ptr[i] = res[i];
-		uFOR(i, 0, source.size)
-			this->ptr[i + this->size] = new data(*source.ptr[i]);
-
-		delete[] res;
-		this->size += source.size;
-		uFOR(i, this->size, this->capacity)
-			this->ptr[i] = nullptr;
-		return *this;
-	}
-
-/*Gán bằng hai mảng
-Độ phức tạp thời gian : O(n)*/
-	arraylist& operator=(const arraylist& source) {
+	//Copy data from other Array List
+	arraylist& operator=(const arraylist& source)
+	{
 		if (this == &source)
 			return *this;
 
-		for (size_t i = 0; this->ptr[i]; ++i)
+		uFOR(i, 0, this->size)
 			delete this->ptr[i];
-		delete[] this->ptr;
-
-		this->capacity = countCapacity(source.size);
-		this->ptr = new data * [this->capacity];
+		base::newCapacity(source.size, false);
 		this->size = source.size;
 
 		uFOR(i, 0, this->size)
 			this->ptr[i] = new data(*source.ptr[i]);
-		uFOR(i, this->size, this->capacity)
-			this->ptr[i] = nullptr;
 		return *this;
 	}
 
-	//=====     Static Function     =====
-	
+	//Get data from other Array List
+	arraylist& operator=(arraylist&& source) noexcept
+	{
+		uFOR(i, 0, this->size)
+			delete this->ptr[i];
+		delete[] this->ptr;
+		//Get data
+		this->size = source.size;
+		this->capacity = source.capacity;
+		this->ptr = source.ptr;
+		source.ptr = nullptr;
+		return *this;
+	}
 
+	//Concatenation two Array List
+	arraylist operator+(const arraylist& source)
+	{
+		arraylist res = *this;
+		res += source;
+		return res;
+	}
 
-	//=====     Child Class : Iterator     =====
+	//Concatenation other Array List
+	arraylist& operator+=(const arraylist& source)
+	{
+		if (source.size == 0)
+			return *this;
+
+		size_t newSize = this->size + source.size;
+		if(newSize > this->capacity)
+			base::newCapacity(newSize);
+
+		data** res = this->ptr + this->size;
+		uFOR(i, 0, source.size)
+			res[i] = new data(*source.ptr[i]);
+		this->size = newSize;
+		return *this;
+	}
+#pragma endregion
+
+	//=====     Child Class : Iterator     =====//
+#pragma region Iterator
 	class iterator {
 		friend arraylist;
 		arraylist* ref;
@@ -535,59 +771,52 @@ bool (*)(const data& a, const data& b) : trả về true nếu a, b đứng đú
 
 		iterator(arraylist* arr, data** idx) : ref{ arr }, ptr{ idx }{}
 	public:
-		//=====     Constructor     =====
-		iterator() : ref{ nullptr }, ptr{ nullptr }{}
+		//=====     Constructor     =====//
 
-		iterator(const iterator& source) : ref{ source.ref }, ptr{ source.ptr }{}
-		
-		//=====     Methods     =====
+		iterator(const iterator& source) :
+			ref{ source.ref }, ptr{ source.ptr }{}
+		//=====     Methods     =====//
 
-		/*Kiểm tra iterator rỗng
-		Trả về true nếu nó rỗng*/
+		//Iterator is null
 		bool null() const {
 			return this->ptr < this->ref->ptr ||
 				this->ptr >= this->ref->ptr + this->ref->size;
 		}
 
-		/*Thử gán giá trị cho phần tử mà nó trỏ tới
-		Trả về true nếu phép gán thành công*/
+		/*Try set a value into item*/
 		bool trySet(const data& val) {
-			if (ptr >= ref->ptr && ptr < ref->ptr + size) {
+			if (this->ptr >= this->ref->ptr &&
+				this->ptr < this->ref->ptr + this->ref->size) {
 				**ptr = val;
 				return true;
 			}
-
 			return false;
 		}
 
-		/*Lấy ra vị trí tại iterator*/
-		int getIndex() const {
+		/*Get index of iterator*/
+		int index() const {
 			return this->ptr - this->ref->ptr;
 		}
 		//=====     Operators     =====
-
-		/*#Tránh iterator là rỗng
-		Trả về đối tượng mà nó trỏ tới*/
+		
+		//Get value of item
 		data& operator*() {
 			return **this->ptr;
 		}
 
-		/*#Tránh iterator là rỗng
-		Trả về địa chỉ của đối tượng nó trỏ tới*/
+		//Get index ( type data* ) of item
 		data* operator->() {
 			return *this->ptr;
 		}
 
-		/*Nếu iterator là rỗng, toán tử ++ không thực hiện
-		Trả về chính nó*/
+		//Iterator move to the next item
 		iterator& operator++() {
 			if (null() == false)
 				++this->ptr;
 			return *this;
 		}
 
-		/*Nếu iterator là rỗng, toán tử ++ không thực hiện
-		Trả về một iterator mới*/
+		//Iterator move to the next item
 		iterator operator++(int) {
 			iterator res(*this);
 			if (null() == false)
@@ -595,16 +824,14 @@ bool (*)(const data& a, const data& b) : trả về true nếu a, b đứng đú
 			return res;
 		}
 
-		/*Nếu iterator là rỗng, toán tử -- không thực hiện
-		Trả về chính nó*/
+		//The iterator moves to the previous item
 		iterator& operator--() {
 			if (null() == false)
 				--this->ptr;
 			return *this;
 		}
 
-		/*Nếu iterator là rỗng, toán tử -- không thực hiện
-		Trả về một iterator mới*/
+		//The iterator moves to the previous item
 		iterator operator--(int) {
 			iterator res(*this);
 			if (null() == false)
@@ -612,133 +839,130 @@ bool (*)(const data& a, const data& b) : trả về true nếu a, b đứng đú
 			return res;
 		}
 
-		/*Gán bằng hai iterator*/
+		//Copy data from other iterator
 		iterator& operator=(const iterator& source) {
 			this->ref = source.ref;
 			this->ptr = source.ptr;
 			return *this;
 		}
 
-		/*So sánh hai iterator
-		Trả về true nếu chúng cùng trỏ vào một đối tượng*/
+		//Compare two iterators
 		bool operator==(const iterator& source) const {
 			return this->ptr == source.ptr;
 		}
 
-		/*So sánh hai iterator
-		Trả về true nếu chúng không cùng trỏ vào một đối tượng*/
+		//Compare two iterators
 		bool operator!=(const iterator& source) const {
 			return this->ptr != source.ptr;
 		}
 
-		/*So sánh hai iterator
-		Trả về true nếu chỉ số phần tử của nó nhỏ hơn chỉ số phần tử source
-		#Hai iterator phải cùng một arraylist*/
+		//Compare two iterators
 		bool operator<(const iterator& source) const {
 			return this->ptr < source.ptr;
 		}
 
-		/*So sánh hai iterator
-		Trả về true nếu chỉ số phần tử của nó lớn hơn chỉ số phần tử source
-		#Hai iterator phải cùng một arraylist*/
+		//Compare two iterators
 		bool operator>(const iterator& source) const {
 			return this->ptr > source.ptr;
 		}
 
-		/*So sánh hai iterator
-		Trả về true nếu chỉ số phần tử của nó nhỏ hơn bằng chỉ số phần tử source
-		#Hai iterator phải cùng một arraylist*/
+		//Compare two iterators
 		bool operator<=(const iterator& source) const {
 			return this->ptr <= source.ptr;
 		}
 
-		/*So sánh hai iterator
-		Trả về true nếu chỉ số phần tử của nó lớn hơn bằng chỉ số phần tử source
-		#Hai iterator phải cùng một arraylist*/
+		//Compare two iterators
 		bool operator>=(const iterator& source) const {
 			return this->ptr >= source.ptr;
 		}
 
-		/*Nếu iterator rỗng, toán tử += không thực hiện
-		Nếu chỉ số vượt quá phạm vi, iterator là end*/
+		//Iterator + int(...)
+		iterator operator+(int i) {
+			return iterator(*this) += i;
+		}
+
+		//Iterator - int(...)
+		iterator operator-(int i) {
+			return iterator(*this) -= i;
+		}
+
+		//Iterator += int(...)
 		iterator& operator+=(int i) {
-			if (null() == false)
+			if (null() == false) {
 				this->ptr += i;
-			if (this->ptr > this->ref->ptr + this->ref->size)
-				this->ptr = this->ref->ptr + this->ref->size;
+				if (this->ptr > this->ref->ptr + this->ref->size)
+					this->ptr = this->ref->ptr + this->ref->size;
+				else if (this->ptr < this->ref->ptr)
+					this->ptr = this->ref->ptr - 1;
+			}
 			return *this;
 		}
 
-		/*Nếu iterator rỗng, toán tử -= không thực hiện
-		Nếu chỉ số vượt quá phạm vi, iterator là rend*/
+		//Iterator -= int(...)
 		iterator& operator-=(int i) {
-			if (null() == false)
+			if (null() == false) {
 				this->ptr -= i;
-			if (this->ptr < this->ref->ptr)
-				this->ptr = this->ref->ptr - 1;
+				if (this->ptr > this->ref->ptr + this->ref->size)
+					this->ptr = this->ref->ptr + this->ref->size;
+				else if (this->ptr < this->ref->ptr)
+					this->ptr = this->ref->ptr - 1;
+			}
 			return *this;
 		}
 
-		/*Kiểm tra iterator không rỗng
-		Trả về true nếu nó không rỗng*/
+		//Check iterator not null
 		operator bool() const {
 			return this->ptr >= this->ref->ptr &&
 				this->ptr < this->ref->ptr + this->ref->size;
 		}
 	};
+#pragma endregion
 
-	//=====     Child Class : Const Iterator     =====
+	//=====     Child Class : Const Iterator     =====//
+#pragma region ConstIterator
 	class const_iterator {
 		friend arraylist;
 		const arraylist* ref;
 		data** ptr;
 
 		const_iterator(const arraylist* arr, data** idx) : ref{ arr }, ptr{ idx }{}
-
 	public:
 		//=====     Constructor     =====
-		const_iterator() : ref{ nullptr }, ptr{ nullptr }{}
 
 		const_iterator(const const_iterator& source) :
 			ref{ source.ref }, ptr{ source.ptr }{}
-
 		//=====     Methods     =====
 
-		/*Kiểm tra iterator rỗng
-		Trả về true nếu nó rỗng*/
+		//Const Iterator is null
 		bool null() const {
 			return this->ptr < this->ref->ptr ||
 				this->ptr >= this->ref->ptr + this->ref->size;
 		}
 
-		/*Lấy ra vị trí tại const_iterator*/
-		int getIndex() const {
+		//Get index of item
+		int index() const {
 			return this->ptr - this->ref->ptr;
 		}
 		//=====     Operators     =====
 
-		/*#Tránh iterator là rỗng
-		Trả về đối tượng hằng mà nó trỏ tới*/
+		//Get const item
 		const data& operator*() {
 			return **this->ptr;
 		}
 
-		/*#Tránh iterator là rỗng
-		Trả về địa chỉ hằng của đối tượng nó trỏ tới*/
+		//Get index ( type const data* ) of item
 		const data* operator->() {
 			return *this->ptr;
 		}
 
-		/*Nếu const_iterator là rỗng, toán tử ++ không thực hiện
-		Trả về chính nó*/
+		//Operator++
 		const_iterator& operator++() {
 			if (null() == false)
 				++this->ptr;
 			return *this;
 		}
 
-		/*Nếu const_iterator là rỗng, toán tử ++ không thực hiện
-		Trả về một const_iterator mới*/
+		//Operator++
 		const_iterator operator++(int) {
 			const_iterator res(*this);
 			if (null() == false)
@@ -746,16 +970,14 @@ bool (*)(const data& a, const data& b) : trả về true nếu a, b đứng đú
 			return res;
 		}
 
-		/*Nếu const_iterator là rỗng, toán tử -- không thực hiện
-		Trả về chính nó*/
+		//Operator--
 		const_iterator& operator--() {
 			if (null() == false)
 				--this->ptr;
 			return *this;
 		}
 
-		/*Nếu const_iterator là rỗng, toán tử -- không thực hiện
-		Trả về một const_iterator mới*/
+		//Operator--
 		const_iterator operator--(int) {
 			const_iterator res(*this);
 			if (null() == false)
@@ -763,269 +985,143 @@ bool (*)(const data& a, const data& b) : trả về true nếu a, b đứng đú
 			return res;
 		}
 
-		/*Gán bằng hai const_iterator*/
+		//Copy data from other Const Iterator
 		const_iterator& operator=(const const_iterator& source) {
 			this->ref = source.ref;
 			this->ptr = source.ptr;
 			return *this;
 		}
 
-		/*So sánh hai const_iterator
-		Trả về true nếu chúng cùng trỏ vào một đối tượng*/
+		//Compare two Const Iterators
 		bool operator==(const const_iterator& source) const {
 			return this->ptr == source.ptr;
 		}
 
-		/*So sánh hai const_iterator
-		Trả về true nếu chúng không cùng trỏ vào một đối tượng*/
+		//Compare two Const Iterators
 		bool operator!=(const const_iterator& source) const {
 			return this->ptr != source.ptr;
 		}
 
-		/*So sánh hai const_iterator
-		Trả về true nếu chỉ số phần tử của nó nhỏ hơn chỉ số phần tử source
-		#Hai const_iterator phải cùng một arraylist*/
+		//Compare two Const Iterators
 		bool operator<(const const_iterator& source) const {
 			return this->ptr < source.ptr;
 		}
 
-		/*So sánh hai const_iterator
-		Trả về true nếu chỉ số phần tử của nó lớn hơn chỉ số phần tử source
-		#Hai const_iterator phải cùng một arraylist*/
+		//Compare two Const Iterators
 		bool operator>(const const_iterator& source) const {
 			return this->ptr > source.ptr;
 		}
 
-		/*So sánh hai const_iterator
-		Trả về true nếu chỉ số phần tử của nó nhỏ hơn bằng chỉ số phần tử source
-		#Hai const_iterator phải cùng một arraylist*/
+		//Compare two Const Iterators
 		bool operator<=(const const_iterator& source) const {
 			return this->ptr <= source.ptr;
 		}
 
-		/*So sánh hai const_iterator
-		Trả về true nếu chỉ số phần tử của nó lớn hơn bằng chỉ số phần tử source
-		#Hai const_iterator phải cùng một arraylist*/
+		//Compare two Const Iterators
 		bool operator>=(const const_iterator& source) const {
 			return this->ptr >= source.ptr;
 		}
 
-		/*Nếu const_iterator rỗng, toán tử += không thực hiện
-		Nếu chỉ số vượt quá phạm vi, const_iterator là cend*/
-		iterator& operator+=(int i) {
-			if (null() == false)
+		//Const Iterator + int(...)
+		const_iterator operator+(int i)
+		{
+			return const_iterator(*this) + i;
+		}
+
+		//Const Iterator - int(...)
+		const_iterator operator-(int i)
+		{
+			return const_iterator(*this) - i;
+		}
+
+		//Const Iterator += int(...)
+		const_iterator& operator+=(int i) {
+			if (null() == false) {
 				this->ptr += i;
-			if (this->ptr > this->ref->ptr + this->ref->size)
-				this->ptr = this->ref->ptr + this->ref->size;
+				if (this->ptr > this->ref->ptr + this->ref->size)
+					this->ptr = this->ref->ptr + this->ref->size;
+				else if (this->ptr < this->ref->ptr)
+					this->ptr = this->ref->ptr - 1;
+			}
 			return *this;
 		}
 
-		/*Nếu const_iterator rỗng, toán tử -= không thực hiện
-		Nếu chỉ số vượt quá phạm vi, const_iterator là crend*/
-		iterator& operator-=(int i) {
-			if (null() == false)
+		//Const Iterator -= int(...)
+		const_iterator& operator-=(int i) {
+			if (null() == false) {
 				this->ptr -= i;
-			if (this->ptr < this->ref->ptr)
-				this->ptr = this->ref->ptr - 1;
+				if (this->ptr > this->ref->ptr + this->ref->size)
+					this->ptr = this->ref->ptr + this->ref->size;
+				else if (this->ptr < this->ref->ptr)
+					this->ptr = this->ref->ptr - 1;
+			}
 			return *this;
 		}
 
-		/*Kiểm tra const_iterator không rỗng
-		Trả về true nếu nó không rỗng*/
+		//Check Const Iterator is not null
 		operator bool() const {
 			return this->ptr >= this->ref->ptr &&
 				this->ptr < this->ref->ptr + this->ref->size;
 		}
 	};
+#pragma endregion
 
-	//=====     Iterator, Const Iterator     =====
-
-/*Trả về iterator trỏ vào phần tử đầu tiên
-Nếu mảng rỗng, iterator sẽ là rỗng*/
-	iterator begin()  {
+	//=====     Methods of Iterator, Const Iterator     =====//
+#pragma region Methods of Iterator
+	//Iterator of first item
+	iterator begin() {
 		return iterator(this, this->ptr);
 	}
 
-/*Trả về iterator trỏ vào phần tử cuối cùng
-Nếu mảng rỗng, iterator sẽ là rỗng*/
+	//Iterator of last item
 	iterator rbegin() {
 		return iterator(this, this->ptr + this->size - 1);
 	}
 
-/*Trả về iterator rỗng ở cuối mảng*/
-	iterator end()  {
+	//Iterator at back of Array List
+	iterator end() {
 		return iterator(this, this->ptr + this->size);
 	}
 
-/*Trả về iterator rỗng ở đầu mảng*/
-	iterator rend()  {
+	//Iterator at front of Array List
+	iterator rend() {
 		return iterator(this, this->ptr - 1);
 	}
 
-/*Trả về const_iterator trỏ vào phần tử đầu tiên
-Nếu mảng rỗng, const_iterator sẽ là rỗng*/
-	const_iterator cbegin() const  {
+	//Const Iterator of first item
+	const_iterator cbegin() const {
 		return const_iterator(this, this->ptr);
 	}
 
-/*Trả về const_iterator trỏ vào phần tử cuối cùng
-Nếu mảng rỗng, const_iterator sẽ là rỗng*/
+	//Const Iterator of last item
 	const_iterator crbegin() const {
 		return const_iterator(this, this->ptr + this->size - 1);
 	}
 
-/*Trả về const_iterator rỗng ở cuối mảng*/
-	const_iterator cend() const  {
+	//Const Iterator at back of Array List
+	const_iterator cend() const {
 		return const_iterator(this, this->ptr + this->size);
 	}
 
-/*Trả về const_iterator rỗng ở đầu mảng*/
-	const_iterator crend() const  {
+	//Const Iterator at front of Array List
+	const_iterator crend() const {
 		return const_iterator(this, this->ptr - 1);
-	} 
-
-/*Trả về const_iterator ở vị trí index
-#Nếu chỉ số index nằm ngoài phạm vi, const_iterator sẽ là cend hoặc crend*/
-	const_iterator citerAt(int index) const {
-		if (index < 0)
-			return crend();
-		if (index >= this->size)
-			return cend();
-		return const_iterator(this, this->ptr + index);
 	}
+#pragma endregion
 
-/*Trả về iterator ở vị trí index
-#Nếu chỉ số index nằm ngoài phạm vi, iterator sẽ là end hoặc rend*/
-	iterator iterAt(int index) {
-		if (index < 0)
-			return rend();
-		if (index >= this->size)
-			return end();
-		return iterator(this, this->ptr + index);
-	}
-
-/*Xóa một phần tử tại iterator
-#Nếu iterator rỗng, không phần tử nào bị xóa
-#Nhận vào rvalue
-Độ phức tạp thời gian : O(n)*/
-	void popAt(iterator&& iter) {
-		popAt(iter.ptr - this->ptr);
-	}
-
-/*Xóa một phần tử tại iterator
-#Nếu iterator rỗng, không phần tử nào bị xóa
-#Nhận vào lvalue
-#Sau khi xóa, iterator trỏ đến phần tử tiếp theo
-Độ phức tạp thời gian : O(n)*/
-	void popAt(iterator& iter) {
-		if (iter.isNull())
-			return;
-
-		int oldIndex = iter.getIndex();
-		popAt(iter.ptr - this->ptr);
-		iter.ptr = this->ptr + oldIndex;
-	}
-
-/*Xóa các phần tử trong đoạn [left, right] hoặc [right, left]
-#Nhận vào các rvalue
-#Nếu có một iterator là rỗng, hàm sẽ kết thúc
-Độ phức tạp thời gian : O(n)*/
-	void popIn(iterator&& left, iterator&& right) {
-		if (left.isNull() || right.isNull())
-			return;
-
-		int leftIndex = left.getIndex();
-		int rightIndex = right.getIndex();
-		popIn(leftIndex, rightIndex);
-	}
-
-/*Xóa các phần tử trong đoạn [left, right] hoặc [right, left]
-#Nhận vào các lvalue
-#Nếu có một iterator là rỗng, hàm sẽ kết thúc
-#Sau khi xóa, left và right sẽ trỏ vào cùng một phần tử tại vị trí left
-Độ phức tạp thời gian : O(n)*/
-	void popIn(iterator& left, iterator& right) {
-		if (left.isNull() || right.isNull())
-			return;
-
-		int leftIndex = left.getIndex();
-		int rightIndex = right.getIndex();
-		int minIndex = leftIndex < rightIndex ? leftIndex : rightIndex;
-
-		popIn(leftIndex, rightIndex);
-		left.ptr = right.ptr = this->ptr + minIndex;
-	}
-
-	//=====     Friend Function     =====
-	template <class Data> friend std::ostream& operator<<(std::ostream& output, const arraylist<Data>& source) {
-		source.out();
-		return output;
-	}
 };
-
-//=====     Constructors, Destructor of Arraylist     =====
-
+//==================================================
+//=====     Overloading Operator STD::COUT     =====//
 template <class data>
-arraylist<data>::arraylist(std::initializer_list<data> list, size_t spaceCapacity) :
-	spaceMemory{ spaceCapacity }, size{ list.size() }
-{
-	this->capacity = countCapacity(this->size);
-	this->ptr = new data * [this->capacity];
-
-	const int* ptrList = list.begin();
-	uFOR(i, 0, this->size)
-		this->ptr[i] = new data(ptrList[i]);
-	uFOR(i, this->size, this->capacity)
-		this->ptr[i] = nullptr;
+std::ostream& operator<<(std::ostream& os, const dynamicarray<data>& list) {
+	list.out();
+	return os;
 }
 
 template <class data>
-template <int n>
-arraylist<data>::arraylist(data(&arr)[n], size_t spaceCapacity) :
-	spaceMemory{ spaceCapacity }, size{ n }
-{
-	this->capacity = countCapacity(n);
-	this->ptr = new data * [this->capacity];
-
-	uFOR(i, 0, this->size)
-		this->ptr[i] = new data(arr[i]);
-	uFOR(i, this->size, this->capacity)
-		this->ptr[i] = nullptr;
+std::ostream& operator<<(std::ostream& os, const arraylist<data>& list) {
+	list.out();
+	return os;
 }
-
-template <class data>
-arraylist<data>::arraylist(size_t spaceCapacity) :
-	spaceMemory{ spaceCapacity }, size{ 0 }, capacity { spaceCapacity }
-{
-	this->ptr = new data * [this->capacity];
-	uFOR(i, 0, this->capacity)
-		this->ptr[i] = nullptr;
-}
-
-template <class data>
-arraylist<data>::arraylist(const arraylist& source) :
-	spaceMemory{ source.spaceMemory },
-	capacity{ source.capacity }, size{ source.size }
-{
-	this->ptr = new data * [this->capacity];
-	uFOR(i, 0, this->size)
-		this->ptr[i] = new data(*source.ptr[i]);
-	uFOR(i, this->size, this->capacity)
-		this->ptr[i] = nullptr;
-}
-
-template <class data>
-arraylist<data>::arraylist(arraylist&& source) noexcept :
-	capacity{ source.capacity }, ptr{ source.ptr },
-	size{ source.size }, spaceMemory { source.spaceMemory }
-{}
-
-template <class data>
-arraylist<data>::~arraylist()
-{
-	for (size_t i = 0; this->ptr[i]; i++)
-		delete this->ptr[i];
-	delete[] this->ptr;
-}
-//**************************************************
+//==================================================
 #endif	//_ARRAY_LIST_
