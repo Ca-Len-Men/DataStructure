@@ -17,6 +17,7 @@
 #define uRFOR(i, last, front) for(size_t i = last; i >= front; --i)
 #define line putchar('\n')
 #define wait _getch()
+#define cls system("cls")
 #endif
 
 #pragma endregion
@@ -797,6 +798,7 @@ public:
 		int index() const {
 			return this->ptr - this->ref->ptr;
 		}
+
 		//=====     Operators     =====
 		
 		//Get value of item
@@ -1073,6 +1075,10 @@ public:
 		return iterator(this, this->ptr);
 	}
 
+	const_iterator begin() const {
+		return const_iterator(this, this->ptr);
+	}
+
 	//Iterator of last item
 	iterator rbegin() {
 		return iterator(this, this->ptr + this->size - 1);
@@ -1081,6 +1087,10 @@ public:
 	//Iterator at back of Array List
 	iterator end() {
 		return iterator(this, this->ptr + this->size);
+	}
+
+	const_iterator end() const {
+		return const_iterator(this, this->ptr + this->size);
 	}
 
 	//Iterator at front of Array List
