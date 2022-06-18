@@ -51,17 +51,13 @@ public:
 
 	~stack()
 	{
-		for (node* i = this->top; this->top != nullptr; i = this->top)
-		{
-			this->top = this->top->next;
-			delete i;
-		}
+		this->clear();
 	}
 #pragma endregion
 	
 	//=====     Methods     =====//
 #pragma region Methods
-	//If stack contain value valthan return true
+	//If Stack contain value valthan return true
 	bool contain(const data& val) const
 	{
 		for (node* i = this->top; i != nullptr; i = i->next)
@@ -121,7 +117,7 @@ public:
 		std::cout << "]\n";
 	}
 
-	//Get the value on top of Stack
+	//Get const value at top of Stack
 	const data& getTop() const {
 		return top->info;
 	}
@@ -146,25 +142,33 @@ public:
 	//=====     Operators     =====//
 #pragma region Operators
 	//Check Stack is not empty
-	operator bool() {
+	operator bool() const {
 		return top != nullptr;
 	}
 
 	//Copy data from other Stack
-	stack& operator=(const stack& st)
+	stack& operator=(const stack& source)
 	{
-		if (this == &st)
+		if (this == &source)
 			return *this;
 		this->clear();
 
-		if (st.top != nullptr)
+		if (source.top != nullptr)
 		{
-			this->top = new node(st.top->info);
-			this->size = st.size;
-			for (node* i = top, *j = st.top->next; j != nullptr; i = i->next, j = j->next)
+			this->top = new node(source.top->info);
+			this->size = source.size;
+			for (node* i = top, *j = source.top->next; j != nullptr; i = i->next, j = j->next)
 				i->next = new node(j->info);
 		}
 		return *this;
+	}
+
+	//Copy data from other Stack
+	stack& operator=(stack&& source) noexcept {
+		this->clear();
+		this->top = source.top;
+		this->size = source.size;
+		source.top = nullptr;
 	}
 #pragma endregion
 
@@ -321,10 +325,10 @@ public:
 //==================================================
 //=====     Overloading Operator STD::COUT     =====//
 template <class datatype>
-std::ostream& operator<<(std::ostream& out, const stack<datatype>& st)
+std::ostream& operator<<(std::ostream& os, const stack<datatype>& source)
 {
-	st.out();
-	return out;
+	source.out();
+	return os;
 }
 
 //==================================================
