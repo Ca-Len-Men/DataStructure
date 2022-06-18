@@ -113,7 +113,7 @@ public:
 	}
 
 	//Get const value at tail of Queue
-	const data& getBack() const  {
+	const data& getTail() const  {
 		return this->tail->info;
 	}
 
@@ -167,6 +167,15 @@ public:
 				this->tail->next = new node(i->info);
 		}
 		return *this;
+	}
+
+	//Copy data from other Stack
+	queue& operator=(queue&& source) noexcept {
+		this->clear();
+		this->head = source.head;
+		this->tail = source.tail;
+		this->size = source.size;
+		source.head = source.tail = nullptr;
 	}
 #pragma endregion
 
