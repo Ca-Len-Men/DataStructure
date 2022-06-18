@@ -330,7 +330,7 @@ public:
 
 	//Check the Kystring is empty
 	bool empty() const {
-		return this->size == 0;
+		return this->size == 0u;
 	}
 
 	//Length of Keystring
@@ -342,6 +342,11 @@ public:
 
 	//=====     Operators     =====
 #pragma region Operators
+	//Check Keystring is not empty
+	operator bool() const {
+		return this->size != 0u;
+	}
+
 	//Get value with key
 	data& operator[](const char* key) {
 		int len = 0;
