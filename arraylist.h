@@ -26,11 +26,11 @@
 Author : Ca Len Men									=
 Dynamic Array : dynamicarray<typename>				=
 Array List : arraylist<typename>					=
-==================================================*/
+===================================================*/
 
 //##################################################
 //==========          Abstract Array          ==========
-template <class data>
+template <class datatype>
 class abstractarray {
 protected:
 	//=====     Protected Methods     =====//
@@ -38,11 +38,11 @@ protected:
 	void newCapacity(bool expand) {
 		if (this->capacity == 1u && expand == false)
 			return;
-		data* res = this->ptr;
+		datatype* res = this->ptr;
 
 		//Expand is true than capacity * 2 else capacity / 2
 		expand ? this->capacity <<= 1u : this->capacity >>= 1u;
-		this->ptr = new data[this->capacity];
+		this->ptr = new datatype[this->capacity];
 		uFOR(i, 0u, this->size)
 			this->ptr[i] = res[i];
 		delete[] res;
@@ -53,38 +53,37 @@ protected:
 		if (maintain_data)
 		{
 			if (newCap < this->size) return;
-			data* res = this->ptr;
-			this->ptr = new data[this->capacity = newCap];
+			datatype* res = this->ptr;
+			this->ptr = new datatype[this->capacity = newCap];
 			uFOR(i, 0u, this->size)
 				this->ptr[i] = res[i];
 			delete[] res;
 		}
 		else {
 			delete[] this->ptr;
-			this->ptr = new data[this->capacity = newCap];
+			this->ptr = new datatype[this->capacity = newCap];
 		}
 	}
-
 #pragma endregion
 
 	//=====     Attributes     =====//
 #pragma region Attributes
-	data* ptr;
+	datatype* ptr;
 	size_t size;
 	size_t capacity;
 #pragma endregion
 
 	//=====     Consturctors and Destructor     =====//
 #pragma region Constructors And Destructor
-	abstractarray(size_t Capacity) : size{ Capacity }, capacity{ Capacity }
-	{ this->ptr = new data[this->capacity]; }
+	abstractarray(size_t Capacity) : size(Capacity), capacity(Capacity)
+	{ this->ptr = new datatype[this->capacity]; }
 	
 public:
 	//Default Constructors
-	abstractarray(bool callMemory = true) : size{ 0u }, capacity{ 1u }
+	abstractarray(bool callMemory = true) : size(0u), capacity(1u)
 	{
 		if(callMemory)
-			this->ptr = new data[this->capacity];
+			this->ptr = new datatype[this->capacity];
 	}
 
 	//Destructor
@@ -97,7 +96,7 @@ public:
 	//=====     Methods     =====//
 #pragma region Methods
 	//Add an item at the end
-	virtual void pushBack(const data& item)
+	virtual void pushBack(const datatype& item)
 	{
 		if (this->size == this->capacity)
 			newCapacity(true);
@@ -105,7 +104,7 @@ public:
 	}
 
 	//Add an item before the first item
-	virtual void pushFront(const data& item)
+	virtual void pushFront(const datatype& item)
 	{
 		if (this->size == this->capacity)
 			newCapacity(true);
@@ -116,8 +115,11 @@ public:
 	}
 
 	//Insert an item at any index
-	virtual void pushAt(const data& item, size_t index)
+	virtual void pushAt(const datatype& item, size_t index)
 	{
+		if (index > this->size)
+			return;
+
 		if (this->size == this->capacity)
 			newCapacity(true);
 		for (size_t i = this->size; i > index; --i)
@@ -129,6 +131,8 @@ public:
 	//Delete last item
 	virtual void popBack()
 	{
+		if (this->size == 0u)
+			return;
 		--this->size;
 		if (this->size == this->capacity >> 1u)	//size == capacity / 2
 			newCapacity(false);
@@ -137,6 +141,8 @@ public:
 	//Delete first item
 	virtual void popFront()
 	{
+		if (this->size == 0u)
+			return;
 		uFOR(i, 1u, this->size)
 			this->ptr[i - 1u] = this->ptr[i];
 		--this->size;
@@ -147,6 +153,8 @@ public:
 	//Delete an item at any index
 	virtual void popAt(size_t index)
 	{
+		if (index >= this->size)
+			return;
 		uFOR(i, index + 1u, this->size)
 			this->ptr[i - 1u] = this->ptr[i];
 		--this->size;
@@ -189,21 +197,24 @@ public:
 	}
 
 	//Writing on console
-	virtual void out() const = 0;
+	virtual void out() const {
+		std::cout << '[';
+		uFOR(i, 0u, this->size) {
+			std::cout << this->ptr[i];
+			if (i + 1u < this->size)
+				std::cout << ", ";
+		}
+		std::cout << "]\n";
+	}
 
 	//Check for empty array
-	virtual bool empty() const {
+	virtual bool empty() const final {
 		return this->size == 0u;
 	}
 
 	//Length of array
-	virtual size_t length() const final {
+	virtual size_t len() const final {
 		return this->size;
-	}
-
-	//Capacity of array
-	virtual size_t limit() const final {
-		return this->capacity;
 	}
 #pragma endregion
 
@@ -212,7 +223,7 @@ public:
 	//Check array is not empty
 	virtual operator bool() const final
 	{
-		return this->size != 0;
+		return this->size != 0u;
 	}
 #pragma endregion
 };
@@ -220,55 +231,31 @@ public:
 
 //##################################################
 //==========          Dynamic Array          ==========
-template <class data>
-class dynamicarray : public abstractarray<data> {
-	using base = abstractarray<data>;
+template <class datatype>
+class dynamicarray : public abstractarray<datatype> {
+	using base = abstractarray<datatype>;
 
 	//=====     Private Methods     =====//
-#pragma region Private Methods 
-	//Sort up ascending
-	void mergeSort(size_t left, size_t right)
-	{
-		if (left >= right) return;
-		size_t mid = (left + right) / 2u;
-		mergeSort(left, mid);
-		mergeSort(mid + 1u, right);
-		if (this->ptr[mid] <= this->ptr[mid + 1u]) return;
-
-		data* pointer = this->ptr + left;
-		size_t i = 0u, j = 0u, k = 0u;
-		left = mid - left + 1u;
-		right = right - mid;
-		data* ptrLeft = new data[left],
-			* ptrRight = this->ptr + mid + 1u;
-
-		for (; i < left; ++i)
-			ptrLeft[i] = pointer[i];
-		for (i = 0u; i < left && j < right; ++k)
-			if (ptrLeft[i] <= ptrRight[j])
-				pointer[k] = ptrLeft[i++];
-			else
-				pointer[k] = ptrRight[j++];
-		for (; i < left; ++i, ++k)
-			pointer[k] = ptrLeft[i];
-		delete[] ptrLeft;
+#pragma region Private Methods
+	static bool less_than_or_equal(const datatype& a, const datatype& b) {
+		return a <= b;
 	}
 
 	//Sort up ascending
 	template <class Functor>
-	void mergeSort(Functor functor, size_t left, size_t right)
+	void MergeSort(Functor functor, size_t left, size_t right)
 	{
 		if (left >= right) return;
 		size_t mid = (left + right) / 2u;
-		mergeSort(functor, left, mid);
-		mergeSort(functor, mid + 1u, right);
+		MergeSort(functor, left, mid);
+		MergeSort(functor, mid + 1u, right);
 		if (functor(this->ptr[mid], this->ptr[mid + 1u])) return;
 
-		data* pointer = this->ptr + left;
+		datatype* pointer = this->ptr + left;
 		size_t i = 0u, j = 0u, k = 0u;
 		left = mid - left + 1u;
 		right = right - mid;
-		data* ptrLeft = new data[left],
+		datatype* ptrLeft = new datatype[left],
 			* ptrRight = this->ptr + mid + 1u;
 
 		for (; i < left; ++i)
@@ -289,9 +276,9 @@ public:
 #pragma region Constructors And Destructor
 	dynamicarray() : base() {}
 
-	dynamicarray(std::initializer_list<data> list) : base(list.size())
+	dynamicarray(std::initializer_list<datatype> list) : base(list.size())
 	{
-		const data* pointer = list.begin();
+		const datatype* pointer = list.begin();
 		uFOR(i, 0u, this->size)
 			this->ptr[i] = pointer[i];
 	}
@@ -323,59 +310,27 @@ public:
 	//=====     Methods     =====//
 #pragma region Methods
 	//Add a list items at the end
-	void push(std::initializer_list<data> list) {
+	void push(std::initializer_list<datatype> list) {
 		size_t newSize = this->size + list.size();
 		base::newCapacity(newSize);
 
-		const data* pointer = list.begin();
+		const datatype* pointer = list.begin();
 		uFOR(i, this->size, newSize)
 			this->ptr[i] = pointer[i];
 		this->size = newSize;
 	}
 
-	//Insert an item at any index
-	void pushAt(const data& item, size_t index)
-	{
-		if (index > this->size)
-			return;
-		base::pushAt(item, index);
-	}
-
-	//Delete last item
-	void popBack()
-	{
-		if (this->size == 0u)
-			return;
-		base::popBack();
-	}
-
-	//Delete first item
-	void popFront()
-	{
-		if (this->size == 0u)
-			return;
-		base::popFront();
-	}
-
-	//Delete an item at any index
-	void popAt(size_t index)
-	{
-		if (index >= this->size)
-			return;
-		base::popAt(index);
-	}
-
 	//Remove the first item with value equal to val
-	void pop(const data& val) {
+	void pop(const datatype& val) {
 		uFOR(i, 0u, this->size)
 			if (this->ptr[i] == val) {
-				popAt(i);
+				base::popAt(i);
 				return;
 			}
 	}
 
 	//Remove all items with value equal to val
-	void popAll(const data& val) {
+	void popAll(const datatype& val) {
 		size_t count = 0u;
 		uFOR(i, 0u, this->size)
 			if (this->ptr[i] == val) 
@@ -394,7 +349,7 @@ public:
 	}
 
 	//Search first item with value equal to val
-	int indexOf(const data& val) {
+	int indexOf(const datatype& val) {
 		uFOR(i, 0u, this->size)
 			if (this->ptr[i] == val)
 				return i;
@@ -402,7 +357,7 @@ public:
 	}
 
 	//Binary search item with value equal to val
-	int binSearch(const data& val, bool ascending = true) {
+	int binSearch(const datatype& val, bool ascending = true) {
 		if (this->size == 0u)
 			return -1;
 		size_t left = 0u, right = this->size - 1u, mid;
@@ -436,20 +391,20 @@ public:
 	}
 	
 	//Set Array List include length items with value equal to val
-	void memset(const data& val, size_t length) {
+	void memset(const datatype& val, size_t length) {
 		base::newCapacity(this->size = length, false);
 		uFOR(i, 0u, this->size)
 			this->ptr[i] = val;
 	}
 
 	//Set all items with value equal to val
-	void memset(const data& val) {
+	void memset(const datatype& val) {
 		uFOR(i, 0u, this->size)
 			this->ptr[i] = val;
 	}
 
 	//Count how many items with value equal to val
-	size_t count(const data& val) const {
+	size_t count(const datatype& val) const {
 		size_t Count(0u);
 		uFOR(i, 0u, this->size)
 			if (val == this->ptr[i])
@@ -462,22 +417,27 @@ public:
 	size_t count(Functor functor) const {
 		size_t Count(0u);
 		uFOR(i, 0u, this->size)
-			if (functor((const data&)this->ptr[i]))
+			if (functor((const datatype&)this->ptr[i]))
 				++Count;
 		return Count;
 	}
 
 	//Sort up ascending
-	void sort()
+	void sort(bool reverse = false)
 	{
-		mergeSort(0u, this->size - 1u);
+		this->MergeSort(this->less_than_or_equal, 0, this->size - 1u);
+		if (reverse)
+			base::reverse();
 	}
 
 	//Sort up ascending
 	template <class Functor>
-	void sort(Functor functor)
+	void sort(Functor functor, bool reverse = false)
 	{
-		mergeSort(functor, 0u, this->size - 1u);
+		//mergeSort(functor, 0u, this->size - 1u);
+		this->MergeSort(functor, 0, this->size - 1u);
+		if (reverse)
+			base::reverse();
 	}
 
 	//Loop through each item
@@ -492,7 +452,7 @@ public:
 	dynamicarray selectIf(Functor functor) const {
 		dynamicarray res;
 		uFOR(i, 0u, this->size)
-			if (functor((const data&)this->ptr[i]))
+			if (functor((const datatype&)this->ptr[i]))
 				res.pushBack(this->ptr[i]);
 		return res;
 	}
@@ -501,7 +461,7 @@ public:
 	template <class Functor>
 	bool all(Functor functor) const {
 		uFOR(i, 0u, this->size)
-			if (functor((const data&)this->ptr[i]) == false)
+			if (functor((const datatype&)this->ptr[i]) == false)
 				return false;
 		return true;
 	}
@@ -510,20 +470,9 @@ public:
 	template <class Functor>
 	bool any(Functor functor) const {
 		uFOR(i, 0u, this->size)
-			if (functor((const data&)this->ptr[i]))
+			if (functor((const datatype&)this->ptr[i]))
 				return true;
 		return false;
-	}
-
-	//Writing on console
-	void out() const {
-		std::cout << '[';
-		uFOR(i, 0u, this->size) {
-			std::cout << this->ptr[i];
-			if (i + 1u < this->size)
-				std::cout << ", ";
-		}
-		std::cout << "]\n";
 	}
 
 #pragma endregion
@@ -531,7 +480,7 @@ public:
 	//=====     Operators     =====//
 #pragma region Operators
 	//Access data at index
-	data& operator[](size_t index) {
+	datatype& operator[](size_t index) {
 		return this->ptr[index];
 	}
 
@@ -559,10 +508,10 @@ public:
 	}
 
 	//Copy data from std::initializer_list
-	dynamicarray& operator=(std::initializer_list<data> list)
+	dynamicarray& operator=(std::initializer_list<datatype> list)
 	{
 		base::newCapacity(this->size = list.size(), false);
-		const data* pointer = list.begin();
+		const datatype* pointer = list.begin();
 		uFOR(i, 0, this->size)
 			this->ptr[i] = pointer[i];
 		return *this;
@@ -582,7 +531,7 @@ public:
 		size_t newSize = this->size + source.size;
 		if(newSize > this->capacity)
 			base::newCapacity(newSize);
-		data* pointer = this->ptr + this->size;
+		datatype* pointer = this->ptr + this->size;
 		uFOR(i, 0u, source.size)
 			pointer[i] = source.ptr[i];
 		this->size = newSize;
@@ -595,14 +544,14 @@ public:
 	class iterator {
 		friend dynamicarray;
 		dynamicarray* ref;
-		data* ptr;
+		datatype* ptr;
 
-		iterator(dynamicarray* arr, data* idx) : ref{ arr }, ptr{ idx }{}
+		iterator(dynamicarray* arr, datatype* idx) : ref(arr), ptr(idx){}
 	public:
 		//=====     Constructor     =====//
-
 		iterator(const iterator& source) :
-			ref{ source.ref }, ptr{ source.ptr }{}
+			ref(source.ref), ptr(source.ptr){}
+
 		//=====     Methods     =====//
 
 		//Iterator is null
@@ -612,7 +561,7 @@ public:
 		}
 
 		/*Try set a value into item*/
-		bool trySet(const data& val) {
+		bool trySet(const datatype& val) {
 			if (this->ptr >= this->ref->ptr &&
 				this->ptr < this->ref->ptr + this->ref->size) {
 				*ptr = val;
@@ -629,12 +578,12 @@ public:
 		//=====     Operators     =====
 
 		//Get value of item
-		data& operator*() {
+		datatype& operator*() {
 			return *this->ptr;
 		}
 
 		//Get index ( type data* ) of item
-		data* operator->() {
+		datatype* operator->() {
 			return this->ptr;
 		}
 
@@ -752,9 +701,9 @@ public:
 	class const_iterator {
 		friend dynamicarray;
 		const dynamicarray* ref;
-		data* ptr;
+		datatype* ptr;
 
-		const_iterator(const dynamicarray* arr, data* idx) : ref{ arr }, ptr{ idx }{}
+		const_iterator(const dynamicarray* arr, datatype* idx) : ref{ arr }, ptr{ idx }{}
 	public:
 		//=====     Constructor     =====
 
@@ -775,12 +724,12 @@ public:
 		//=====     Operators     =====
 
 		//Get const item
-		const data& operator*() {
+		const datatype& operator*() {
 			return *this->ptr;
 		}
 
 		//Get index ( type const data* ) of item
-		const data* operator->() {
+		const datatype* operator->() {
 			return this->ptr;
 		}
 
@@ -952,56 +901,32 @@ public:
 
 //##################################################
 //==========          Array List          ==========
-template <class data>
-class arraylist : public abstractarray<data*> {
+template <class datatype>
+class arraylist : public abstractarray<datatype*> {
 private:
-	using base = abstractarray<data*>;
+	using base = abstractarray<datatype*>;
 
 	//=====     Private Methods     =====//
 #pragma region Private Methods
-	//Sort up ascending
-	void mergeSort(size_t left, size_t right)
-	{
-		if (left >= right) return;
-		size_t mid = (left + right) / 2u;
-		mergeSort(left, mid);
-		mergeSort(mid + 1u, right);
-		if (*this->ptr[mid] <= *this->ptr[mid + 1u]) return;
-
-		data** pointer = this->ptr + left;
-		size_t i = 0u, j = 0u, k = 0u;
-		left = mid - left + 1u;
-		right = right - mid;
-		data** ptrLeft = new data * [left],
-			** ptrRight = this->ptr + mid + 1u;
-		
-		for(; i < left; ++i)
-			ptrLeft[i] = pointer[i];
-		for (i = 0u; i < left && j < right; ++k)
-			if (*ptrLeft[i] <= *ptrRight[j])
-				pointer[k] = ptrLeft[i++];
-			else
-				pointer[k] = ptrRight[j++];
-		for(; i < left; ++i, ++k)
-			pointer[k] = ptrLeft[i];
-		delete[] ptrLeft;
+	static bool less_than_or_equal(const datatype& a, const datatype& b) {
+		return a <= b;
 	}
 
 	//Sort up ascending
 	template <class Functor>
-	void mergeSort(Functor functor, size_t left, size_t right)
+	void MergeSort(Functor functor, size_t left, size_t right)
 	{
 		if (left >= right) return;
 		size_t mid = (left + right) / 2u;
-		mergeSort(functor, left, mid);
-		mergeSort(functor, mid + 1u, right);
+		MergeSort(functor, left, mid);
+		MergeSort(functor, mid + 1u, right);
 		if (functor(*this->ptr[mid], *this->ptr[mid + 1u])) return;
 
-		data** pointer = this->ptr + left;
+		datatype** pointer = this->ptr + left;
 		size_t i = 0u, j = 0u, k = 0u;
 		left = mid - left + 1u;
 		right = right - mid;
-		data** ptrLeft = new data * [left],
+		datatype** ptrLeft = new datatype * [left],
 			** ptrRight = this->ptr + mid + 1u;
 
 		for (; i < left; ++i)
@@ -1022,19 +947,18 @@ public:
 #pragma region Constructors And Destructor
 	arraylist() : base() {}
 
-	arraylist(std::initializer_list<data> list) :
-		base(list.size())
+	arraylist(std::initializer_list<datatype> list) : base(list.size())
 	{
-		const data* pointer = list.begin();
+		const datatype* pointer = list.begin();
 		uFOR(i, 0, this->size)
-			this->ptr[i] = new data(pointer[i]);
+			this->ptr[i] = new datatype(pointer[i]);
 	}
 
 	arraylist(const arraylist& source) :
 		base(source.size)
 	{
 		uFOR(i, 0, this->size)
-			this->ptr[i] = new data(*source.ptr[i]);
+			this->ptr[i] = new datatype(*source.ptr[i]);
 	}
 
 	template <class anyIterator>
@@ -1064,38 +988,38 @@ public:
 	//=====     Methods     =====//
 #pragma region Methods
 	//Add a list items at the end
-	void push(std::initializer_list<data> list)
+	void push(std::initializer_list<datatype> list)
 	{
 		size_t listSize = list.size();
 		size_t newSize = this->size + listSize;
 		if (this->capacity < newSize)
 			base::newCapacity(newSize);
 
-		const data* pointer = list.begin();
-		data** res = this->ptr + this->size;
+		const datatype* pointer = list.begin();
+		datatype** res = this->ptr + this->size;
 		uFOR(i, 0u, listSize)
-			res[i] = new data(pointer[i]);
+			res[i] = new datatype(pointer[i]);
 		this->size = newSize;
 	}
 
 	//Add an item at the end
-	void pushBack(const data& item)
+	void pushBack(const datatype& item)
 	{
-		base::pushBack(new data(item));
+		base::pushBack(new datatype(item));
 	}
 
 	//Add an item before the first item
-	void pushFront(const data& item)
+	void pushFront(const datatype& item)
 	{
-		base::pushFront(new data(item));
+		base::pushFront(new datatype(item));
 	}
 
 	//Insert an item at any index
-	void pushAt(const data& item, size_t index)
+	void pushAt(const datatype& item, size_t index)
 	{
 		if (index > this->size)
 			return;
-		base::pushAt(new data(item), index);
+		base::pushAt(new datatype(item), index);
 	}
 
 	//Remove last item
@@ -1122,7 +1046,7 @@ public:
 	}
 
 	//Remove the first item with value equal to val
-	bool pop(const data& val) {
+	bool pop(const datatype& val) {
 		uFOR(i, 0u, this->size)
 			if (*this->ptr[i] == val) {
 				popAt(i);
@@ -1132,7 +1056,7 @@ public:
 	}
 
 	//Remove all items with value equal to val
-	void popAll(const data& val) {
+	void popAll(const datatype& val) {
 		size_t count = 0u;
 		uFOR(i, 0u, this->size)
 			if (*this->ptr[i] == val) {
@@ -1171,7 +1095,7 @@ public:
 	}
 
 	//Search first item with value equal to val
-	int indexOf(const data& val) const {
+	int indexOf(const datatype& val) const {
 		uFOR(i, 0u, this->size)
 			if (*this->ptr[i] == val)
 				return i;
@@ -1179,7 +1103,7 @@ public:
 	}
 
 	//Binary search item with value equal to val
-	int binSearch(const data& val, bool ascending = true) {
+	int binSearch(const datatype& val, bool ascending = true) {
 		if (this->size == 0u)
 			return -1;
 		size_t left = 0u, right = this->size - 1u, mid;
@@ -1220,26 +1144,26 @@ public:
 	}
 
 	//Set Array List include length items with value equal to val
-	void memset(const data& val, size_t length) {
+	void memset(const datatype& val, size_t length) {
 		uFOR(i, 0u, this->size)
 			delete this->ptr[i];
 
 		base::newCapacity(length, false);
 		this->size = length;
 		uFOR(i, 0u, this->size)
-			this->ptr[i] = new data(val);
+			this->ptr[i] = new datatype(val);
 	}
 
 	//Set all items with value equal to val
-	void memset(const data& item) {
+	void memset(const datatype& item) {
 		uFOR(i, 0u, this->size)
 			delete this->ptr[i];
 		uFOR(i, 0u, this->size)
-			this->ptr[i] = new data(item);
+			this->ptr[i] = new datatype(item);
 	}
 
 	//Count how many items with value equal to val
-	size_t count(const data& val) const {
+	size_t count(const datatype& val) const {
 		size_t Count(0u);
 		uFOR(i, 0u, this->size)
 			if (val == *this->ptr[i])
@@ -1248,16 +1172,20 @@ public:
 	}
 
 	//Sort up ascending
-	void sort()
+	void sort(bool reverse = false)
 	{
-		mergeSort(0u, this->size - 1u);
+		this->MergeSort(this->less_than_or_equal, 0u, this->size - 1u);
+		if (reverse)
+			base::reverse();
 	}
 
 	//Sort up ascending
 	template <class Functor>
-	void sort(Functor functor)
+	void sort(Functor functor, bool reverse = false)
 	{
-		mergeSort(functor, 0u, this->size - 1u);
+		this->MergeSort(functor, 0u, this->size - 1u);
+		if (reverse)
+			base::reverse();
 	}
 
 	//Count how many items if its satisfy the condition
@@ -1265,7 +1193,7 @@ public:
 	size_t count(Functor functor) const {
 		size_t Count(0u);
 		uFOR(i, 0, this->size)
-			if (functor((const data&)*this->ptr[i]))
+			if (functor((const datatype&)*this->ptr[i]))
 				++Count;
 		return Count;
 	}
@@ -1282,7 +1210,7 @@ public:
 	arraylist selectIf(Functor functor) const {
 		arraylist res;
 		uFOR(i, 0u, this->size)
-			if (functor((const data&)*this->ptr[i]))
+			if (functor((const datatype&)*this->ptr[i]))
 				res.pushBack(*this->ptr[i]);
 		return res;
 	}
@@ -1291,7 +1219,7 @@ public:
 	template <class Functor>
 	bool all(Functor functor) const {
 		uFOR(i, 0u, this->size)
-			if (functor((const data)*this->ptr[i]) == false)
+			if (functor((const datatype)*this->ptr[i]) == false)
 				return false;
 		return true;
 	}
@@ -1300,7 +1228,7 @@ public:
 	template <class Functor>
 	bool any(Functor functor) const {
 		uFOR(i, 0u, this->size)
-			if (functor((const data)*this->ptr[i]))
+			if (functor((const datatype)*this->ptr[i]))
 				return true;
 		return false;
 	}
@@ -1320,7 +1248,7 @@ public:
 	//=====     Operators     =====//
 #pragma region Operators
 	//Access data at index
-	data& operator[](size_t index)
+	datatype& operator[](size_t index)
 	{
 		return *this->ptr[index];
 	}
@@ -1337,7 +1265,7 @@ public:
 		this->size = source.size;
 
 		uFOR(i, 0, this->size)
-			this->ptr[i] = new data(*source.ptr[i]);
+			this->ptr[i] = new datatype(*source.ptr[i]);
 		return *this;
 	}
 
@@ -1356,14 +1284,14 @@ public:
 	}
 
 	//Get data from initializer_list<data>
-	arraylist& operator=(std::initializer_list<data> list)
+	arraylist& operator=(std::initializer_list<datatype> list)
 	{
 		uFOR(i, 0u, this->size)
 			delete this->ptr[i];
 		base::newCapacity(this->size = list.size(), false);
-		const data* pointer = list.begin();
+		const datatype* pointer = list.begin();
 		uFOR(i, 0u, this->size)
-			this->ptr[i] = new data(pointer[i]);
+			this->ptr[i] = new datatype(pointer[i]);
 		return *this;
 	}
 
@@ -1385,9 +1313,9 @@ public:
 		if(newSize > this->capacity)
 			base::newCapacity(newSize);
 
-		data** res = this->ptr + this->size;
+		datatype** res = this->ptr + this->size;
 		uFOR(i, 0, source.size)
-			res[i] = new data(*source.ptr[i]);
+			res[i] = new datatype(*source.ptr[i]);
 		this->size = newSize;
 		return *this;
 	}
@@ -1398,9 +1326,9 @@ public:
 	class iterator {
 		friend arraylist;
 		arraylist* ref;
-		data** ptr;
+		datatype** ptr;
 
-		iterator(arraylist* arr, data** idx) : ref{ arr }, ptr{ idx }{}
+		iterator(arraylist* arr, datatype** idx) : ref{ arr }, ptr{ idx }{}
 	public:
 		//=====     Constructor     =====//
 
@@ -1415,7 +1343,7 @@ public:
 		}
 
 		/*Try set a value into item*/
-		bool trySet(const data& val) {
+		bool trySet(const datatype& val) {
 			if (this->ptr >= this->ref->ptr &&
 				this->ptr < this->ref->ptr + this->ref->size) {
 				**ptr = val;
@@ -1432,12 +1360,12 @@ public:
 		//=====     Operators     =====
 		
 		//Get value of item
-		data& operator*() {
+		datatype& operator*() {
 			return **this->ptr;
 		}
 
 		//Get index ( type data* ) of item
-		data* operator->() {
+		datatype* operator->() {
 			return *this->ptr;
 		}
 
@@ -1555,9 +1483,9 @@ public:
 	class const_iterator {
 		friend arraylist;
 		const arraylist* ref;
-		data** ptr;
+		datatype** ptr;
 
-		const_iterator(const arraylist* arr, data** idx) : ref{ arr }, ptr{ idx }{}
+		const_iterator(const arraylist* arr, datatype** idx) : ref{ arr }, ptr{ idx }{}
 	public:
 		//=====     Constructor     =====
 
@@ -1578,12 +1506,12 @@ public:
 		//=====     Operators     =====
 
 		//Get const item
-		const data& operator*() {
+		const datatype& operator*() {
 			return **this->ptr;
 		}
 
 		//Get index ( type const data* ) of item
-		const data* operator->() {
+		const datatype* operator->() {
 			return *this->ptr;
 		}
 
@@ -1754,14 +1682,14 @@ public:
 };
 //==================================================
 //=====     Overloading Operator STD::COUT     =====//
-template <class data>
-std::ostream& operator<<(std::ostream& os, const dynamicarray<data>& list) {
+template <class datatype>
+std::ostream& operator<<(std::ostream& os, const dynamicarray<datatype>& list) {
 	list.out();
 	return os;
 }
 
-template <class data>
-std::ostream& operator<<(std::ostream& os, const arraylist<data>& list) {
+template <class datatype>
+std::ostream& operator<<(std::ostream& os, const arraylist<datatype>& list) {
 	list.out();
 	return os;
 }
