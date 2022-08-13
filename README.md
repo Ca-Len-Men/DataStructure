@@ -21,7 +21,7 @@
     ▶ pair.h      : dsa::pair
     ▶ heap.h      : dsa::minheap, dsa::maxheap
     ▶ limitlist.h : dsa::stack, dsa::queue
-    ▶ arraylist.h : dsa::arraylist, dsa::dynamiclist
+    ▶ arraylist.h : dsa::arraylist, dsa::dynamicarray
     ▶ set.h       : dsa::set
     ▶ map.h       : dsa::map
     ▶ hashset.h   : dsa::hashset
