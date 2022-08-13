@@ -605,6 +605,16 @@ namespace dsa
 		source.out();
 		return os;
 	}
+
+#ifndef _HASH_STRING_
+#define _HASH_STRING_
+	int operator%(const std::string& str, int mod) {
+		int sum(0);
+		for (auto i : str)
+			sum += int(i);
+		return sum % mod;
+	}
+#endif	// _HASH_STRING_
 }
 //==================================================//
 #endif	// _FISH_HASHSET_
