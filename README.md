@@ -4,14 +4,28 @@
 # Include :
     ▶️ : Tuple
     ▶️ : Range
-    ▶️ : Heap
+    ▶️ : Pair
+    ▶️ : Min/Max Heap
     ▶️ : Stack
     ▶️ : Queue
     ▶️ : Dynamic List
     ▶️ : Array List
     ▶️ : Set
     ▶️ : Map
-    ▶️ : Hast Table
+    ▶️ : Hast Set
+    ▶️ : Hast Map
+    
+## File :
+    ▶ tuple.h     : dsa::tuple
+    ▶ range.h     : dsa::range
+    ▶ pair.h      : dsa::pair
+    ▶ heap.h      : dsa::minheap, dsa::maxheap
+    ▶ limitlist.h : dsa::stack, dsa::queue
+    ▶ arraylist.h : dsa::arraylist, dsa::dynamiclist
+    ▶ set.h       : dsa::set
+    ▶ map.h       : dsa::map
+    ▶ hashset.h   : dsa::hashset
+    ▶ hashmap.h   : dsa::hashmap
     
 ## Hope you learn well. Thanks for using. 💙😙
 ![](https://komarev.com/ghpvc/?username=Ca-Len-Men)
