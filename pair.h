@@ -1,7 +1,6 @@
 #ifndef _FISH_PAIR_
 #define _FISH_PAIR_
 
-// Include
 #include <iostream>
 
 /*===================================================
