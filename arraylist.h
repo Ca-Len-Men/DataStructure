@@ -234,36 +234,33 @@ namespace dsa
 		//=====     Private Methods     =====//
 #pragma region Private Methods
 		static bool less_than_or_equal(const datatype& a, const datatype& b) {
-			return a <= b;
+			if (a > b) return 1;
+			if (a < b) return -1;
+			return 0;
 		}
 
 		//Sort up ascending
 		template <class Functor>
-		void MergeSort(Functor functor, size_t left, size_t right)
+		void QuickSort(Functor functor, int left, int right)
 		{
 			if (left >= right) return;
-			size_t mid = (left + right) / 2u;
-			MergeSort(functor, left, mid);
-			MergeSort(functor, mid + 1u, right);
-			if (functor(this->ptr[mid], this->ptr[mid + 1u])) return;
+			int i = left, j = right;
+			int mid = (i + j) / 2;
+			
+			do {
+				while (functor(this->ptr[i], this->ptr[mid]) > 0) ++i;
+				while (functor(this->ptr[j], this->ptr[mid]) < 0) --j;
 
-			datatype* pointer = this->ptr + left;
-			size_t i = 0u, j = 0u, k = 0u;
-			left = mid - left + 1u;
-			right = right - mid;
-			datatype* ptrLeft = new datatype[left],
-				* ptrRight = this->ptr + mid + 1u;
+				if (i <= j) {
+					if (i != j)
+						std::swap(this->ptr[i], this->ptr[j]);
+					++i;
+					--j;
+				}
+			} while (i < j);
 
-			for (; i < left; ++i)
-				ptrLeft[i] = pointer[i];
-			for (i = 0u; i < left && j < right; ++k)
-				if (functor(ptrLeft[i], ptrRight[j]))
-					pointer[k] = ptrLeft[i++];
-				else
-					pointer[k] = ptrRight[j++];
-			for (; i < left; ++i, ++k)
-				pointer[k] = ptrLeft[i];
-			delete[] ptrLeft;
+			QuickSort(functor, left, j);
+			QuickSort(functor, i, right);
 		}
 #pragma endregion
 
@@ -421,7 +418,7 @@ namespace dsa
 		//Sort up ascending
 		void sort(bool reverse = false)
 		{
-			this->MergeSort(this->less_than_or_equal, 0, this->size - 1u);
+			this->QuickSort(this->less_than_or_equal, 0, this->size - 1);
 			if (reverse)
 				base::reverse();
 		}
@@ -431,7 +428,7 @@ namespace dsa
 		void sort(Functor functor, bool reverse = false)
 		{
 			//mergeSort(functor, 0u, this->size - 1u);
-			this->MergeSort(functor, 0, this->size - 1u);
+			this->QuickSort(functor, 0, this->size - 1);
 			if (reverse)
 				base::reverse();
 		}
@@ -909,36 +906,33 @@ namespace dsa
 		//=====     Private Methods     =====//
 	#pragma region Private Methods
 		static bool less_than_or_equal(const datatype& a, const datatype& b) {
-			return a <= b;
+			if (a > b) return 1;
+			if (a < b) return -1;
+			return 0;
 		}
 
 		//Sort up ascending
 		template <class Functor>
-		void MergeSort(Functor functor, size_t left, size_t right)
+		void QuickSort(Functor functor, int left, int right)
 		{
 			if (left >= right) return;
-			size_t mid = (left + right) / 2u;
-			MergeSort(functor, left, mid);
-			MergeSort(functor, mid + 1u, right);
-			if (functor(*this->ptr[mid], *this->ptr[mid + 1u])) return;
+			int i = left, j = right;
+			int mid = (i + j) / 2;
 
-			datatype** pointer = this->ptr + left;
-			size_t i = 0u, j = 0u, k = 0u;
-			left = mid - left + 1u;
-			right = right - mid;
-			datatype** ptrLeft = new datatype * [left],
-				** ptrRight = this->ptr + mid + 1u;
+			do {
+				while (functor(*this->ptr[i], *this->ptr[mid]) > 0) ++i;
+				while (functor(*this->ptr[j], *this->ptr[mid]) < 0) --j;
 
-			for (; i < left; ++i)
-				ptrLeft[i] = pointer[i];
-			for (i = 0u; i < left && j < right; ++k)
-				if (functor(*ptrLeft[i], *ptrRight[j]))
-					pointer[k] = ptrLeft[i++];
-				else
-					pointer[k] = ptrRight[j++];
-			for (; i < left; ++i, ++k)
-				pointer[k] = ptrLeft[i];
-			delete[] ptrLeft;
+				if (i <= j) {
+					if (i != j)
+						std::swap(this->ptr[i], this->ptr[j]);
+					++i;
+					--j;
+				}
+			} while (i < j);
+
+			QuickSort(functor, left, j);
+			QuickSort(functor, i, right);
 		}
 	#pragma endregion
 
@@ -1174,7 +1168,7 @@ namespace dsa
 		//Sort up ascending
 		void sort(bool reverse = false)
 		{
-			this->MergeSort(this->less_than_or_equal, 0u, this->size - 1u);
+			this->QuickSort(this->less_than_or_equal, 0, this->size - 1);
 			if (reverse)
 				base::reverse();
 		}
@@ -1183,7 +1177,7 @@ namespace dsa
 		template <class Functor>
 		void sort(Functor functor, bool reverse = false)
 		{
-			this->MergeSort(functor, 0u, this->size - 1u);
+			this->QuickSort(functor, 0, this->size - 1);
 			if (reverse)
 				base::reverse();
 		}
