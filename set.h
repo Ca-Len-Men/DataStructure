@@ -164,45 +164,6 @@ namespace dsa
 			next->ptrs[0] = mid;
 		}
 
-		void viewRecur(node* rootnode, size_t layer = 0u) const
-		{
-			if (rootnode == nullptr)
-				return;
-			int count = 1;
-			if (rootnode->values[1]) count = 2;
-
-			for (int i = count; i >= 0; --i)
-			{
-				//Print node
-				if (i < count) {
-					for (int k = 0; k < layer; ++k)
-						printf("%10s", " ");
-					if (i == count - 1)
-						putchar('[');
-					printf("%10d", *rootnode->values[i]);
-					if (i == 0u)
-						putchar(']');
-					line;
-				}
-				if (rootnode->num > 0)
-					viewRecur(rootnode->ptrs[i], layer + 1u);
-			}
-		}
-
-		void viewNum(node* rootnode, size_t layer = 0u) const {
-			if (rootnode == nullptr)	return;
-			RFOR(i, layer * 10, 1)
-				putchar(' ');
-			std::cout << rootnode->num;
-			if (rootnode == root)
-				std::cout << " " << size;
-			std::cout << std::endl;
-			if (rootnode->num < 0)	return;
-			viewNum(rootnode->ptrs[2], layer + 1u);
-			viewNum(rootnode->ptrs[1], layer + 1u);
-			viewNum(rootnode->ptrs[0], layer + 1u);
-		}
-
 		// Push recursion
 		bool push_recursion(node*& rootnode, const datatype& value, datatype*& ptr_value, node*& ptr_node) {
 			size_t index = rootnode->find_branch(value);
@@ -486,21 +447,6 @@ namespace dsa
 				next_node = qu.pop();
 				linked(prev_node, next_node);
 			}
-		}
-
-		//View on Console
-		void view() const
-		{
-			if (this->root == nullptr) {
-				printf("B Plus is empty !\n");
-				return;
-			}
-			viewRecur(this->root);
-		}
-
-		//View on Console
-		void viewNum() const {
-			viewNum(root);
 		}
 #pragma endregion
 
